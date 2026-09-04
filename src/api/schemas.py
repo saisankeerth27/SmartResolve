@@ -190,3 +190,82 @@ class DashboardStatsResponse(BaseModel):
     ticket_status_counts: dict
     incident_status_counts: dict
     site_status_counts: dict
+
+
+# ── Dashboard Overview Schemas ───────────────────────────
+
+class DashboardMetrics(BaseModel):
+    open_tickets: int
+    high_priority_tickets: int
+    active_incidents: int
+    network_sites: int
+    affected_customers: int
+    total_customers: int
+
+
+class TicketBreakdown(BaseModel):
+    by_status: dict
+    by_priority: dict
+    by_category: dict
+
+
+class NetworkHealth(BaseModel):
+    total: int
+    operational: int
+    degraded: int
+    maintenance: int
+    offline: int
+    status: str
+    active_events: int
+
+
+class RegionalImpact(BaseModel):
+    region: str
+    open_tickets: int
+    active_incidents: int
+    affected_customers: int
+
+
+class ActiveIncidentSummary(BaseModel):
+    id: int
+    incident_number: str
+    title: str
+    description: str
+    affected_service: str
+    severity: str
+    region: str
+    started_at: str
+    resolved_at: str | None
+    status: str
+    affected_customers_estimate: int
+
+
+class PriorityCase(BaseModel):
+    ticket_number: str
+    customer_name: str
+    customer_number: str
+    subject: str
+    priority: str
+    status: str
+    region: str
+    reasons: list[str]
+    score: int
+    created_at: str
+
+
+class RecentActivity(BaseModel):
+    type: str
+    timestamp: str
+    description: str
+    related_id: str
+    event_type: str
+
+
+class DashboardOverviewResponse(BaseModel):
+    metrics: DashboardMetrics
+    ticket_breakdown: TicketBreakdown
+    network_health: NetworkHealth
+    regional_impact: list[RegionalImpact]
+    active_incidents: list[ActiveIncidentSummary]
+    priority_cases: list[PriorityCase]
+    recent_activity: list[RecentActivity]

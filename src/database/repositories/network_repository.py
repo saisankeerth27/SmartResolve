@@ -93,3 +93,50 @@ class NetworkRepository:
             "SELECT COUNT(*) FROM network_events WHERE status = 'active'"
         )
         return cursor.fetchone()[0]
+
+    def get_sites_by_region(self) -> list[dict]:
+        cursor = self.conn.execute(
+            """SELECT region, COUNT(*) as site_count,
+                      SUM(CASE WHEN status = 'operational' THEN 1 ELSE 0 END) as operational,
+                      SUM(CASE WHEN status = 'degraded' THEN 1 ELSE 0 END) as degraded,
+                      SUM(CASE WHEN status = 'maintenance' THEN 1 ELSE 0 END) as maintenance_count,
+                      SUM(CASE WHEN status = 'offline' THEN 1 ELSE 0 END) as offline_count
+               FROM network_sites
+               GROUP BY region
+               ORDER BY site_count DESC"""
+        )
+        return [dict(row) for row in cursor.fetchall()]
+
+    def get_network_health(self) -> dict:
+        cursor = self.conn.execute(
+            """SELECT
+                 COUNT(*) as total,
+                 SUM(CASE WHEN status = 'operational' THEN 1 ELSE 0 END) as operational,
+                 SUM(CASE WHEN status = 'degraded' THEN 1 ELSE 0 END) as degraded,
+                 SUM(CASE WHEN status = 'maintenance' THEN 1 ELSE 0 END) as maintenance,
+                 SUM(CASE WHEN status = 'offline' THEN 1 ELSE 0 END) as offline
+               FROM network_sites"""
+        )
+        row = cursor.fetchone()
+        return dict(row) if row else {"total": 0, "operational": 0, "degraded": 0, "maintenance": 0, "offline": 0}
+
+    def get_active_events_by_site(self, limit: int = 10) -> list[dict]:
+        cursor = self.conn.execute(
+            """SELECT ne.id, ne.site_id, ne.event_type, ne.severity, ne.title,
+                      ne.description, ne.started_at, ne.status,
+                      ns.site_code, ns.site_name, ns.region
+               FROM network_events ne
+               JOIN network_sites ns ON ne.site_id = ns.id
+               WHERE ne.status = 'active'
+               ORDER BY
+                 CASE ne.severity
+                   WHEN 'critical' THEN 1
+                   WHEN 'high' THEN 2
+                   WHEN 'medium' THEN 3
+                   WHEN 'low' THEN 4
+                 END,
+                 ne.started_at DESC
+               LIMIT ?""",
+            (limit,),
+        )
+        return [dict(row) for row in cursor.fetchall()]

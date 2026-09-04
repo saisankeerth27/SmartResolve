@@ -87,3 +87,48 @@ class IncidentRepository:
             "SELECT status, COUNT(*) as count FROM incidents GROUP BY status"
         )
         return {row["status"]: row["count"] for row in cursor.fetchall()}
+
+    def get_active_incidents_list(self, limit: int = 10) -> list[dict]:
+        cursor = self.conn.execute(
+            """SELECT * FROM incidents
+               WHERE status IN ('investigating', 'identified', 'monitoring')
+               ORDER BY
+                 CASE severity
+                   WHEN 'critical' THEN 1
+                   WHEN 'high' THEN 2
+                   WHEN 'medium' THEN 3
+                   WHEN 'low' THEN 4
+                 END,
+                 started_at DESC
+               LIMIT ?""",
+            (limit,),
+        )
+        return [dict(row) for row in cursor.fetchall()]
+
+    def get_active_by_region(self) -> list[dict]:
+        cursor = self.conn.execute(
+            """SELECT region, COUNT(*) as incident_count,
+                      SUM(affected_customers_estimate) as total_affected
+               FROM incidents
+               WHERE status IN ('investigating', 'identified', 'monitoring')
+               GROUP BY region
+               ORDER BY incident_count DESC"""
+        )
+        return [dict(row) for row in cursor.fetchall()]
+
+    def get_total_affected_customers(self) -> int:
+        cursor = self.conn.execute(
+            """SELECT COALESCE(SUM(affected_customers_estimate), 0)
+               FROM incidents
+               WHERE status IN ('investigating', 'identified', 'monitoring')"""
+        )
+        return cursor.fetchone()[0]
+
+    def get_recent_incidents(self, limit: int = 10) -> list[dict]:
+        cursor = self.conn.execute(
+            """SELECT * FROM incidents
+               ORDER BY started_at DESC
+               LIMIT ?""",
+            (limit,),
+        )
+        return [dict(row) for row in cursor.fetchall()]

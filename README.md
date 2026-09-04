@@ -18,15 +18,20 @@ The system resolves what the available evidence supports, asks for missing infor
 | AI/LLM | Gemini (planned) |
 | RAG | FAISS, NumPy (planned) |
 
-## Current Implementation (Stage 2 - Data Layer)
+## Current Implementation (Stage 3 - Operations Dashboard)
 
-This release adds the core telecom operations data model:
+This release adds the full telecom operations dashboard:
 
 - **SQLite database** with 9 relational tables and proper foreign keys
 - **Realistic seed data** with 55 customers, 8 plans, 63 subscriptions, 18 network sites, 42 network events, 12 incidents, 110 tickets, and 110 customer interactions
 - **Repository layer** with clean data access methods
 - **REST API endpoints** with filtering and pagination
-- **Frontend integration** with live data from the backend API
+- **Dashboard service** with deterministic metrics, priority scoring, and network health calculations
+- **Modular React dashboard** with KPI cards, network health, ticket workload, active incidents, regional impact, priority cases, and recent activity
+- **Status/priority/severity badges** with consistent color coding
+- **Responsive sidebar navigation** with Overview, Cases, Customers, Operations, Knowledge, and Evidence pages
+- **Loading/error/empty states** for all data sections
+- **Real-time refresh** with last-updated timestamp
 
 ### Database Schema
 
@@ -60,6 +65,7 @@ The seed data includes realistic scenarios for testing:
 |--------|------|-------------|
 | GET | `/api/health` | Health check |
 | GET | `/api/dashboard` | Dashboard statistics |
+| GET | `/api/dashboard/overview` | Full operations dashboard data |
 | GET | `/api/customers` | List customers with search/filter |
 | GET | `/api/customers/{id}` | Customer detail |
 | GET | `/api/customers/{id}/subscriptions` | Customer subscriptions |
@@ -143,7 +149,8 @@ SmartResolve/
 │   │       ├── network_repository.py
 │   │       ├── incident_repository.py
 │   │       └── plan_repository.py
-│   ├── services/           # (planned)
+│   ├── services/
+│   │   └── dashboard_service.py  # Dashboard metrics and calculations
 │   ├── ai/                 # (planned)
 │   ├── retrieval/          # (planned)
 │   └── rules/              # (planned)
@@ -152,6 +159,13 @@ SmartResolve/
 ├── knowledge/              # (planned)
 ├── index/                  # (planned)
 └── frontend/
+    ├── src/
+    │   ├── components/
+    │   │   ├── common/     # States, Badges
+    │   │   └── dashboard/  # KpiCards, NetworkHealth, TicketWorkload, etc.
+    │   ├── pages/          # Overview page
+    │   ├── services/       # API service
+    │   └── types/          # TypeScript types
     └── dist/               # Built React frontend
 ```
 
@@ -161,17 +175,16 @@ SmartResolve/
 - No RAG or FAISS retrieval yet
 - No resolution engine or escalation logic
 - No knowledge base documents
-- Frontend shows basic data tables only
+- Evidence and citations page is a placeholder
 
 ## Future Stages
 
-- Stage 3: Gemini integration and knowledge base
 - Stage 4: RAG retrieval with FAISS
 - Stage 5: Deterministic business rules
 - Stage 6: Resolution engine
 - Stage 7: Escalation logic
 - Stage 8: Evidence scoring
-- Stage 9: Advanced dashboard
+- Stage 9: Knowledge base integration
 - Stage 10: Final polish and testing
 
 ## Local URL

@@ -25,6 +25,7 @@ from src.api.schemas import (
     CustomerInteractionResponse,
     CustomerInteractionListResponse,
     DashboardStatsResponse,
+    DashboardOverviewResponse,
 )
 from src.core.config import SERVICE_NAME, GEMINI_CONFIGURED, FRONTEND_DIST
 from src.database.db import get_connection
@@ -33,6 +34,7 @@ from src.database.repositories.ticket_repository import TicketRepository
 from src.database.repositories.network_repository import NetworkRepository
 from src.database.repositories.incident_repository import IncidentRepository
 from src.database.repositories.plan_repository import PlanRepository
+from src.services.dashboard_service import get_dashboard_overview
 
 logger = logging.getLogger(__name__)
 
@@ -79,6 +81,16 @@ async def dashboard_stats() -> DashboardStatsResponse:
             incident_status_counts=ir.count_by_status(),
             site_status_counts=nr.count_by_status(),
         )
+    finally:
+        conn.close()
+
+
+@router.get("/dashboard/overview", response_model=DashboardOverviewResponse)
+async def dashboard_overview() -> DashboardOverviewResponse:
+    conn = get_connection()
+    try:
+        data = get_dashboard_overview(conn)
+        return DashboardOverviewResponse(**data)
     finally:
         conn.close()
 

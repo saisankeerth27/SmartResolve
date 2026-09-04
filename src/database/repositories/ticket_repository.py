@@ -102,6 +102,79 @@ class TicketRepository:
         )
         return {row["status"]: row["count"] for row in cursor.fetchall()}
 
+    def count_by_priority(self) -> dict:
+        cursor = self.conn.execute(
+            "SELECT priority, COUNT(*) as count FROM tickets GROUP BY priority"
+        )
+        return {row["priority"]: row["count"] for row in cursor.fetchall()}
+
+    def count_by_category(self) -> dict:
+        cursor = self.conn.execute(
+            "SELECT category, COUNT(*) as count FROM tickets GROUP BY category"
+        )
+        return {row["category"]: row["count"] for row in cursor.fetchall()}
+
+    def count_active_tickets(self) -> int:
+        cursor = self.conn.execute(
+            "SELECT COUNT(*) FROM tickets WHERE status != 'resolved'"
+        )
+        return cursor.fetchone()[0]
+
+    def count_high_priority_active(self) -> int:
+        cursor = self.conn.execute(
+            "SELECT COUNT(*) FROM tickets WHERE priority IN ('high', 'critical') AND status != 'resolved'"
+        )
+        return cursor.fetchone()[0]
+
+    def get_open_tickets_by_region(self) -> list[dict]:
+        cursor = self.conn.execute(
+            """SELECT ns.region, COUNT(*) as ticket_count
+               FROM tickets t
+               JOIN subscriptions s ON t.subscription_id = s.id
+               JOIN network_sites ns ON s.network_site_id = ns.id
+               WHERE t.status != 'resolved'
+               GROUP BY ns.region
+               ORDER BY ticket_count DESC"""
+        )
+        return [dict(row) for row in cursor.fetchall()]
+
+    def get_escalated_tickets(self, limit: int = 10) -> list[dict]:
+        cursor = self.conn.execute(
+            """SELECT t.id, t.ticket_number, t.subject, t.priority, t.status,
+                      t.category, t.created_at, t.assigned_team,
+                      c.name as customer_name, c.customer_number,
+                      ns.region
+               FROM tickets t
+               JOIN customers c ON t.customer_id = c.id
+               LEFT JOIN subscriptions s ON t.subscription_id = s.id
+               LEFT JOIN network_sites ns ON s.network_site_id = ns.id
+               WHERE t.status = 'escalated'
+               ORDER BY
+                 CASE t.priority
+                   WHEN 'critical' THEN 1
+                   WHEN 'high' THEN 2
+                   WHEN 'medium' THEN 3
+                   WHEN 'low' THEN 4
+                 END,
+                 t.created_at DESC
+               LIMIT ?""",
+            (limit,),
+        )
+        return [dict(row) for row in cursor.fetchall()]
+
+    def get_recent_events(self, limit: int = 15) -> list[dict]:
+        cursor = self.conn.execute(
+            """SELECT te.id, te.ticket_id, te.event_type, te.actor_type,
+                      te.description, te.created_at,
+                      t.ticket_number, t.subject
+               FROM ticket_events te
+               JOIN tickets t ON te.ticket_id = t.id
+               ORDER BY te.created_at DESC
+               LIMIT ?""",
+            (limit,),
+        )
+        return [dict(row) for row in cursor.fetchall()]
+
     def count_all(self) -> int:
         cursor = self.conn.execute("SELECT COUNT(*) FROM tickets")
         return cursor.fetchone()[0]
