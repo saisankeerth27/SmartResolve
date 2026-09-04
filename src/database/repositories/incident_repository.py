@@ -132,3 +132,19 @@ class IncidentRepository:
             (limit,),
         )
         return [dict(row) for row in cursor.fetchall()]
+
+    def get_active_by_region_list(self, region: str) -> list[dict]:
+        cursor = self.conn.execute(
+            """SELECT * FROM incidents
+               WHERE region = ? AND status IN ('investigating', 'identified', 'monitoring')
+               ORDER BY
+                 CASE severity
+                   WHEN 'critical' THEN 1
+                   WHEN 'high' THEN 2
+                   WHEN 'medium' THEN 3
+                   WHEN 'low' THEN 4
+                 END,
+                 started_at DESC""",
+            (region,),
+        )
+        return [dict(row) for row in cursor.fetchall()]

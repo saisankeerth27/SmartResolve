@@ -1,4 +1,4 @@
-TRACK_ID=PS6
+TRACK_ID=PS04
 
 # SmartResolve
 
@@ -13,27 +13,56 @@ The system resolves what the available evidence supports, asks for missing infor
 | Layer | Technology |
 |-------|-----------|
 | Backend | Python, FastAPI, Uvicorn, Pydantic |
-| Frontend | React, TypeScript, Vite, Tailwind CSS |
+| Frontend | React, TypeScript, Vite, Tailwind CSS, React Router |
 | Database | SQLite |
 | AI/LLM | Gemini (planned) |
 | RAG | FAISS, NumPy (planned) |
 
-## Current Implementation (Stage 3 - Operations Dashboard)
+## Current Implementation (Stage 4 - Case Investigation Workflow)
 
-This release adds the full telecom operations dashboard:
+This release adds the complete case investigation workflow:
 
-- **SQLite database** with 9 relational tables and proper foreign keys
-- **Realistic seed data** with 55 customers, 8 plans, 63 subscriptions, 18 network sites, 42 network events, 12 incidents, 110 tickets, and 110 customer interactions
-- **Repository layer** with clean data access methods
-- **REST API endpoints** with filtering and pagination
-- **Dashboard service** with deterministic metrics, priority scoring, and network health calculations
-- **Modular React dashboard** with KPI cards, network health, ticket workload, active incidents, regional impact, priority cases, and recent activity
-- **Status/priority/severity badges** with consistent color coding
-- **Responsive sidebar navigation** with Overview, Cases, Customers, Operations, Knowledge, and Evidence pages
-- **Loading/error/empty states** for all data sections
-- **Real-time refresh** with last-updated timestamp
+- **Case List** with search (ticket number, customer name/number, subject), status/priority/category filters, pagination, desktop table and mobile card layouts
+- **Case Detail** investigation workspace with customer profile, service/subscription, network context, active incidents, previous tickets, ticket timeline, customer interactions
+- **Investigation Service** with deterministic readiness calculation, known facts extraction, and missing information identification
+- **Deterministic Investigation Rules** that correlate ticket category with network status, identify regional incidents, and flag repeated customer issues
+- **Partial Data Handling** - system works gracefully with incomplete data (missing subscription, no network site, no incidents)
+- **Readiness Indicator** - READY / PARTIAL / INSUFFICIENT DATA based on available context
+- **React Router** navigation between case list and case detail views
 
-### Database Schema
+### Investigation Readiness Logic
+
+- **READY**: Customer exists, ticket exists, subscription linked, network site available
+- **PARTIAL**: Core ticket/customer exists but subscription or network context missing
+- **INSUFFICIENT DATA**: Critical context missing (e.g., customer record not found)
+
+### Deterministic Rules
+
+- Network site status "degraded" flagged as relevant to customer issue
+- Active incidents in customer's region identified as potentially related
+- Previous tickets in same category counted and surfaced
+- Data overage detected when usage exceeds plan limit
+- Site capacity above 85% flagged as high utilization
+
+### Known vs Missing Information
+
+The system extracts what it knows from the database and identifies gaps:
+- Known: customer, subscription, plan, network site, incidents, ticket history, interactions
+- Missing: device model, exact location, signal strength, symptom details
+
+This prepares context for future AI reasoning without hallucinating data.
+
+### Case Investigation Scenarios
+
+The seed data supports testing these scenarios:
+- Network issue with active regional incident
+- Network issue without active incident
+- Billing issue with healthy network
+- Customer with repeated tickets in same category
+- High data usage exceeding plan limits
+- Enterprise vs consumer customer handling
+
+## Database Schema
 
 | Entity | Description |
 |--------|-------------|
@@ -47,19 +76,7 @@ This release adds the full telecom operations dashboard:
 | `ticket_events` | Ticket history and audit trail |
 | `customer_interactions` | Customer contact records |
 
-### Intentional Scenarios
-
-The seed data includes realistic scenarios for testing:
-- Customers with poor 5G performance linked to congested sites
-- Regional outages affecting multiple customers
-- Repeated tickets for the same service
-- Issues unrelated to any network event
-- Billing complaints with healthy network status
-- Enterprise customers requiring different handling
-- Failed previous troubleshooting attempts
-- Resolved incidents followed by new complaints
-
-### API Endpoints
+## API Endpoints
 
 | Method | Path | Description |
 |--------|------|-------------|
@@ -81,6 +98,7 @@ The seed data includes realistic scenarios for testing:
 | GET | `/api/tickets` | List tickets with filters |
 | GET | `/api/tickets/{id}` | Ticket detail with history |
 | GET | `/api/tickets/{id}/history` | Ticket event history |
+| GET | `/api/cases/{id}/investigation` | Case investigation context |
 
 All collection endpoints support `page` and `page_size` query parameters.
 
@@ -90,6 +108,7 @@ All collection endpoints support `page` and `page_size` query parameters.
 python -m venv .venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
+cd frontend && npm install && cd ..
 ```
 
 ## Running the Application
@@ -102,27 +121,6 @@ This starts the complete application on `http://localhost:8000`.
 
 A single terminal is all that is needed. The database is automatically initialized and seeded on first run.
 
-## Seed Data Generation
-
-The seed data is generated deterministically using `src/database/seed.py` with a fixed random seed (42). To regenerate:
-
-```python
-from src.database.db import get_connection
-from src.database.seed import seed_database
-conn = get_connection()
-seed_database(conn, force=True)
-conn.close()
-```
-
-## Environment Variables
-
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `PORT` | Server port (default: 8000) | No |
-| `GEMINI_API_KEY` | Google Gemini API key | No (required for AI features) |
-
-Never hard-code or commit API keys.
-
 ## Project Structure
 
 ```
@@ -130,8 +128,6 @@ SmartResolve/
 ├── app.py                  # Application entry point
 ├── requirements.txt        # Python dependencies
 ├── README.md
-├── .gitignore
-├── .python-version
 ├── src/
 │   ├── api/
 │   │   ├── routes.py       # API endpoints
@@ -150,24 +146,39 @@ SmartResolve/
 │   │       ├── incident_repository.py
 │   │       └── plan_repository.py
 │   ├── services/
-│   │   └── dashboard_service.py  # Dashboard metrics and calculations
+│   │   ├── dashboard_service.py
+│   │   └── case_investigation_service.py
 │   ├── ai/                 # (planned)
 │   ├── retrieval/          # (planned)
 │   └── rules/              # (planned)
 ├── data/
-│   └── smartresolve.db     # SQLite database with seed data
+│   └── smartresolve.db
 ├── knowledge/              # (planned)
 ├── index/                  # (planned)
 └── frontend/
     ├── src/
     │   ├── components/
     │   │   ├── common/     # States, Badges
-    │   │   └── dashboard/  # KpiCards, NetworkHealth, TicketWorkload, etc.
-    │   ├── pages/          # Overview page
-    │   ├── services/       # API service
-    │   └── types/          # TypeScript types
-    └── dist/               # Built React frontend
+    │   │   └── dashboard/  # KpiCards, NetworkHealth, etc.
+    │   ├── pages/
+    │   │   ├── Overview.tsx
+    │   │   ├── Cases.tsx
+    │   │   └── CaseDetail.tsx
+    │   ├── services/api.ts
+    │   └── types/
+    │       ├── index.ts
+    │       └── case.ts
+    └── dist/
 ```
+
+## Environment Variables
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `PORT` | Server port (default: 8000) | No |
+| `GEMINI_API_KEY` | Google Gemini API key | No (required for AI features) |
+
+Never hard-code or commit API keys.
 
 ## Current Limitations
 
@@ -179,12 +190,11 @@ SmartResolve/
 
 ## Future Stages
 
-- Stage 4: RAG retrieval with FAISS
-- Stage 5: Deterministic business rules
-- Stage 6: Resolution engine
-- Stage 7: Escalation logic
-- Stage 8: Evidence scoring
-- Stage 9: Knowledge base integration
+- Stage 5: RAG retrieval with FAISS
+- Stage 6: Deterministic business rules
+- Stage 7: Resolution engine
+- Stage 8: Escalation logic
+- Stage 9: Evidence scoring
 - Stage 10: Final polish and testing
 
 ## Local URL

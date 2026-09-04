@@ -140,3 +140,15 @@ class NetworkRepository:
             (limit,),
         )
         return [dict(row) for row in cursor.fetchall()]
+
+    def get_events_for_site(self, site_id: int, limit: int = 10) -> list[dict]:
+        cursor = self.conn.execute(
+            """SELECT ne.*, ns.site_code, ns.site_name
+               FROM network_events ne
+               JOIN network_sites ns ON ne.site_id = ns.id
+               WHERE ne.site_id = ?
+               ORDER BY ne.started_at DESC
+               LIMIT ?""",
+            (site_id, limit),
+        )
+        return [dict(row) for row in cursor.fetchall()]

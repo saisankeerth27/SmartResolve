@@ -26,6 +26,16 @@ from src.api.schemas import (
     CustomerInteractionListResponse,
     DashboardStatsResponse,
     DashboardOverviewResponse,
+    InvestigationContext,
+    InvestigationSubscription,
+    InvestigationNetworkSite,
+    InvestigationNetworkEvent,
+    InvestigationIncident,
+    InvestigationTicketHistory,
+    InvestigationInteraction,
+    PreviousTicket,
+    CustomerStats,
+    InvestigationResult,
 )
 from src.core.config import SERVICE_NAME, GEMINI_CONFIGURED, FRONTEND_DIST
 from src.database.db import get_connection
@@ -35,6 +45,7 @@ from src.database.repositories.network_repository import NetworkRepository
 from src.database.repositories.incident_repository import IncidentRepository
 from src.database.repositories.plan_repository import PlanRepository
 from src.services.dashboard_service import get_dashboard_overview
+from src.services.case_investigation_service import get_case_investigation
 
 logger = logging.getLogger(__name__)
 
@@ -397,6 +408,40 @@ async def get_ticket_history(ticket_id: int) -> list[TicketEventResponse]:
             raise HTTPException(status_code=404, detail="Ticket not found")
         history = repo.get_history(ticket_id)
         return [TicketEventResponse(**h) for h in history]
+    finally:
+        conn.close()
+
+
+# ── Case Investigation ─────────────────────────────────
+
+@router.get("/cases/{ticket_id}/investigation")
+async def get_investigation(ticket_id: int):
+    conn = get_connection()
+    try:
+        repo = TicketRepository(conn)
+        ticket = repo.get_by_id(ticket_id)
+        if not ticket:
+            raise HTTPException(status_code=404, detail="Ticket not found")
+
+        result = get_case_investigation(conn, ticket_id)
+        if not result:
+            raise HTTPException(status_code=500, detail="Failed to build investigation context")
+
+        return InvestigationContext(
+            ticket=TicketResponse(**result["ticket"]),
+            customer=CustomerResponse(**result["customer"]) if result["customer"] else None,
+            subscription=InvestigationSubscription(**result["subscription"]) if result["subscription"] else None,
+            previous_tickets=[PreviousTicket(**pt) for pt in result["previous_tickets"]],
+            network={
+                "site": InvestigationNetworkSite(**result["network"]["site"]) if result["network"]["site"] else None,
+                "events": [InvestigationNetworkEvent(**e) for e in result["network"]["events"]],
+            },
+            incidents=[InvestigationIncident(**inc) for inc in result["incidents"]],
+            ticket_history=[InvestigationTicketHistory(**h) for h in result["ticket_history"]],
+            interactions=[InvestigationInteraction(**i) for i in result["interactions"]],
+            customer_stats=CustomerStats(**result["customer_stats"]),
+            investigation=InvestigationResult(**result["investigation"]),
+        )
     finally:
         conn.close()
 

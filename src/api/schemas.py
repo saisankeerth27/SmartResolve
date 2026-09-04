@@ -269,3 +269,134 @@ class DashboardOverviewResponse(BaseModel):
     active_incidents: list[ActiveIncidentSummary]
     priority_cases: list[PriorityCase]
     recent_activity: list[RecentActivity]
+
+
+# ── Case Investigation Schemas ─────────────────────────
+
+class InvestigationSubscription(BaseModel):
+    id: int
+    customer_id: int
+    plan_id: int
+    service_number: str
+    service_type: str
+    activation_date: str
+    status: str
+    network_site_id: int
+    data_usage_gb: float
+    billing_cycle_day: int
+    plan_name: str
+    plan_code: str
+    plan_type: str
+    monthly_price: float
+    data_limit_gb: int
+    voice_minutes: int
+    sms_limit: int
+    speed_mbps: int
+    site_code: str
+    site_name: str
+    technology: str
+    region: str
+    city: str
+    capacity_percent: int
+    site_status: str
+    last_maintenance_at: str | None
+
+
+class InvestigationNetworkSite(BaseModel):
+    id: int
+    site_code: str
+    site_name: str
+    technology: str
+    region: str
+    city: str
+    latitude: float
+    longitude: float
+    capacity_percent: int
+    status: str
+    last_maintenance_at: str | None
+
+
+class InvestigationNetworkEvent(BaseModel):
+    id: int
+    site_id: int
+    event_type: str
+    severity: str
+    title: str
+    description: str
+    started_at: str
+    resolved_at: str | None
+    status: str
+    site_code: str | None = None
+    site_name: str | None = None
+
+
+class InvestigationIncident(BaseModel):
+    id: int
+    incident_number: str
+    title: str
+    description: str
+    affected_service: str
+    severity: str
+    region: str
+    started_at: str
+    resolved_at: str | None
+    status: str
+    affected_customers_estimate: int
+
+
+class InvestigationTicketHistory(BaseModel):
+    id: int
+    ticket_id: int
+    event_type: str
+    actor_type: str
+    description: str
+    created_at: str
+
+
+class InvestigationInteraction(BaseModel):
+    id: int
+    customer_id: int
+    ticket_id: int | None
+    interaction_type: str
+    summary: str
+    sentiment: str
+    created_at: str
+    ticket_number: str | None = None
+
+
+class PreviousTicket(BaseModel):
+    id: int
+    ticket_number: str
+    subject: str
+    category: str
+    priority: str
+    status: str
+    created_at: str
+    resolved_at: str | None
+    assigned_team: str | None
+
+
+class CustomerStats(BaseModel):
+    active_subscriptions: int
+    total_tickets: int
+    total_interactions: int
+
+
+class InvestigationResult(BaseModel):
+    readiness: str
+    known_facts: list[str]
+    missing_information: list[str]
+    same_category_previous_tickets: int
+
+
+class InvestigationContext(BaseModel):
+    ticket: TicketResponse
+    customer: CustomerResponse | None
+    subscription: InvestigationSubscription | None
+    previous_tickets: list[PreviousTicket]
+    network: dict
+    incidents: list[InvestigationIncident]
+    ticket_history: list[InvestigationTicketHistory]
+    interactions: list[InvestigationInteraction]
+    customer_stats: CustomerStats
+    investigation: InvestigationResult

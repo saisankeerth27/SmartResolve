@@ -131,3 +131,24 @@ class CustomerRepository:
     def count_all(self) -> int:
         cursor = self.conn.execute("SELECT COUNT(*) FROM customers")
         return cursor.fetchone()[0]
+
+    def count_active_subscriptions(self, customer_id: int) -> int:
+        cursor = self.conn.execute(
+            "SELECT COUNT(*) FROM subscriptions WHERE customer_id = ? AND status = 'active'",
+            (customer_id,),
+        )
+        return cursor.fetchone()[0]
+
+    def count_tickets(self, customer_id: int) -> int:
+        cursor = self.conn.execute(
+            "SELECT COUNT(*) FROM tickets WHERE customer_id = ?",
+            (customer_id,),
+        )
+        return cursor.fetchone()[0]
+
+    def count_interactions(self, customer_id: int) -> int:
+        cursor = self.conn.execute(
+            "SELECT COUNT(*) FROM customer_interactions WHERE customer_id = ?",
+            (customer_id,),
+        )
+        return cursor.fetchone()[0]
