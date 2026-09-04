@@ -7,7 +7,6 @@ venv/
 node_modules/
 frontend/dist/
 frontend/node_modules/
-*.db
 *.sqlite
 *.sqlite3
 .mypy_cache/

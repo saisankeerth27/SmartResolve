@@ -2,6 +2,9 @@ import sqlite3
 import logging
 from pathlib import Path
 
+from src.database.init_db import create_schema
+from src.database.seed import seed_database
+
 logger = logging.getLogger(__name__)
 
 DATABASE_PATH: Path | None = None
@@ -17,7 +20,9 @@ def init_database(db_path: Path) -> None:
         cursor.execute("PRAGMA journal_mode=WAL")
         cursor.execute("PRAGMA foreign_keys=ON")
         conn.commit()
-        logger.info("Database initialized at %s", db_path)
+        create_schema(conn)
+        seed_database(conn)
+        logger.info("Database initialized and seeded at %s", db_path)
     finally:
         conn.close()
 
