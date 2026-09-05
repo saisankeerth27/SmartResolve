@@ -164,3 +164,102 @@ export type CaseInvestigationContext = {
   customer_stats: CaseCustomerStats
   investigation: CaseInvestigationResult
 }
+
+// ── AI Reasoning Types ─────────────────────────────────
+
+export type PossibleCause = {
+  cause: string
+  evidence: string[]
+}
+
+export type KnowledgeCitation = {
+  document_id: string
+  document_title: string
+  section: string
+}
+
+export type RetrievalResult = {
+  chunk_id: string
+  document_id: string
+  document_title: string
+  section_heading: string
+  content: string
+  score: number
+}
+
+export type RetrievalInfo = {
+  status: string
+  query: string
+  results: RetrievalResult[]
+  total: number
+}
+
+export type AIReasoningResult = {
+  status: 'grounded' | 'insufficient_evidence'
+  summary: string
+  possible_causes: PossibleCause[]
+  recommended_next_steps: string[]
+  knowledge_citations: KnowledgeCitation[]
+  limitations: string[]
+  confidence: 'high' | 'medium' | 'low'
+}
+
+export type CaseReasoningResponse = {
+  case_id: string
+  retrieval: RetrievalInfo
+  reasoning: AIReasoningResult
+}
+
+// ── Resolution Decision Types ──────────────────────────
+
+export type ResolutionRecommendation = {
+  category: string
+  action: string
+}
+
+export type ResolutionEvidence = {
+  type: string
+  source: string
+  reference: string
+  statement: string
+}
+
+export type ResolutionKnowledgeSource = {
+  document_id: string
+  section: string
+}
+
+export type ResolutionAIAssessment = {
+  summary: string | null
+  confidence: string | null
+  status: string | null
+}
+
+export type ResolutionDecision = {
+  case_id: string
+  decision_status: string
+  primary_recommendation: ResolutionRecommendation
+  alternative_actions: ResolutionRecommendation[]
+  deterministic_findings: string[]
+  ai_assessment: ResolutionAIAssessment | null
+  evidence: ResolutionEvidence[]
+  knowledge_sources: ResolutionKnowledgeSource[]
+  confidence: string
+  confidence_reasons: string[]
+  limitations: string[]
+  conflicts: string[]
+  requires_human_review: boolean
+  review_reasons: string[]
+}
+
+export type ReviewState = {
+  id: number
+  ticket_id: number
+  recommendation_category: string | null
+  recommendation_action: string | null
+  confidence: string | null
+  reviewer_decision: string | null
+  reason: string | null
+  created_at: string
+  updated_at: string
+}

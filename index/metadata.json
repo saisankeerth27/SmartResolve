@@ -1,0 +1,1757 @@
+[
+  {
+    "chunk_id": "network-incident-response::s0",
+    "document_id": "network-incident-response",
+    "document_title": "Network Incident Response Procedures",
+    "section_heading": "",
+    "category": "network",
+    "chunk_index": 0,
+    "content": "# Network Incident Response Procedures"
+  },
+  {
+    "chunk_id": "network-incident-response::s1",
+    "document_id": "network-incident-response",
+    "document_title": "Network Incident Response Procedures",
+    "section_heading": "Purpose",
+    "category": "network",
+    "chunk_index": 1,
+    "content": "This document defines the standard procedures for responding to network incidents across all SmartConnect regions. Follow these steps to ensure consistent and timely resolution."
+  },
+  {
+    "chunk_id": "network-incident-response::s2",
+    "document_id": "network-incident-response",
+    "document_title": "Network Incident Response Procedures",
+    "section_heading": "Incident Severity Classification",
+    "category": "network",
+    "chunk_index": 2,
+    "content": "### Critical (P1)\n\nNetwork-wide outage or complete service disruption affecting more than 10,000 customers. Examples include backbone fiber cuts, core router failures, or DNS infrastructure collapse. Response time must be within 15 minutes of detection. Escalation to VP of Network Operations is mandatory.\n\n### High (P2)\n\nPartial outage affecting a single region or technology tier. Up to 10,000 customers impacted. Examples include regional base station cluster failures, BNG (Broadband Network Gateway) overloads, or LTE core failures. Response time must be within 30 minutes.\n\n### Medium (P3)\n\nDegraded service in a limited area affecting fewer than 2,000 customers. Examples include individual cell site capacity overloads, backhaul congestion, or intermittent connectivity issues. Response time must be within 2 hours.\n\n### Low (P4)\n\nMinor performance degradation affecting fewer than 500 customers. Examples include elevated latency, minor packet loss, or non-critical service degradation. Response time must be within 8 hours."
+  },
+  {
+    "chunk_id": "network-incident-response::s3",
+    "document_id": "network-incident-response",
+    "document_title": "Network Incident Response Procedures",
+    "section_heading": "Initial Response Checklist",
+    "category": "network",
+    "chunk_index": 3,
+    "content": "### Step 1: Verify the Alert\n\nConfirm the alert is valid by checking network monitoring dashboards. Cross-reference with customer trouble reports. Check if a maintenance window is active. Determine if the issue is localized or widespread.\n\n### Step 2: Notify stakeholders\n\nSend notification to the Network Operations Center (NOC) team lead. Update the incident bridge channel. If P1 or P2, notify regional operations managers. Log initial assessment in the incident management system.\n\n### Step 3: Gather diagnostic data\n\nCollect relevant logs from affected network elements. Capture interface statistics and error counters. Record routing table state. Note any recent configuration changes. Preserve packet captures if available.\n\n### Step 4: Identify root cause\n\nAnalyze collected data to determine root cause. Check for correlation with known issues. Review change management records for recent modifications. Consult vendor documentation if hardware-related. Document findings in real-time."
+  },
+  {
+    "chunk_id": "network-incident-response::s4",
+    "document_id": "network-incident-response",
+    "document_title": "Network Incident Response Procedures",
+    "section_heading": "Escalation Matrix",
+    "category": "network",
+    "chunk_index": 4,
+    "content": "### Tier 1: NOC Team\n\nHandles P3 and P4 incidents. Performs initial triage and basic troubleshooting. Escalates to Tier 2 if not resolved within 2 hours.\n\n### Tier 2: Regional Engineers\n\nHandles P2 incidents and escalated P3 incidents. Performs advanced troubleshooting. Coordinates with vendors if needed. Escalates to Tier 3 if not resolved within 4 hours.\n\n### Tier 3: Network Architects\n\nHandles P1 incidents and escalated P2 incidents. Coordinates cross-functional response. Makes architecture-level decisions. Engages vendor support at highest priority.\n\n### Tier 4: Vendor Support\n\nEngaged for hardware failures or complex software issues. Provides TAC (Technical Assistance Center) support. Coordinates RMA (Return Merchandise Authorization) for defective equipment."
+  },
+  {
+    "chunk_id": "network-incident-response::s5",
+    "document_id": "network-incident-response",
+    "document_title": "Network Incident Response Procedures",
+    "section_heading": "Communication Templates",
+    "category": "network",
+    "chunk_index": 5,
+    "content": "### Initial Notification\n\nIncident detected: [severity] - [description] - [affected region] - [estimated customers impacted] - [investigation status]\n\n### Resolution Update\n\nIncident resolved: [incident_id] - [root cause] - [resolution] - [duration] - [preventive measures]"
+  },
+  {
+    "chunk_id": "network-incident-response::s6",
+    "document_id": "network-incident-response",
+    "document_title": "Network Incident Response Procedures",
+    "section_heading": "Post-Incident Review",
+    "category": "network",
+    "chunk_index": 6,
+    "content": "All P1 and P2 incidents require a post-incident review within 48 hours. The review must include timeline, root cause analysis, customer impact assessment, and preventive action items. Results are shared with the Operations team and logged in the knowledge base."
+  },
+  {
+    "chunk_id": "network-incident-response::s7",
+    "document_id": "network-incident-response",
+    "document_title": "Network Incident Response Procedures",
+    "section_heading": "Recovery Procedures",
+    "category": "network",
+    "chunk_index": 7,
+    "content": "### Network Recovery\n\nVerify all affected sites are operational. Confirm routing convergence. Validate customer connectivity through synthetic tests. Monitor for 30 minutes post-recovery to ensure stability.\n\n### Customer Recovery\n\nNotify affected customers of service restoration. Provide credits if SLA was breached. Update ticket status and close related support tickets. Send satisfaction survey after 48 hours."
+  },
+  {
+    "chunk_id": "network-health-monitoring::s0",
+    "document_id": "network-health-monitoring",
+    "document_title": "Network Health Monitoring Standards",
+    "section_heading": "",
+    "category": "network",
+    "chunk_index": 0,
+    "content": "# Network Health Monitoring Standards"
+  },
+  {
+    "chunk_id": "network-health-monitoring::s1",
+    "document_id": "network-health-monitoring",
+    "document_title": "Network Health Monitoring Standards",
+    "section_heading": "Overview",
+    "category": "network",
+    "chunk_index": 1,
+    "content": "This document defines the monitoring standards used to assess network health across SmartConnect infrastructure. All monitoring follows the three-state model: Healthy, Degraded, and Critical."
+  },
+  {
+    "chunk_id": "network-health-monitoring::s2",
+    "document_id": "network-health-monitoring",
+    "document_title": "Network Health Monitoring Standards",
+    "section_heading": "Health State Definitions",
+    "category": "network",
+    "chunk_index": 2,
+    "content": "### Healthy\n\nAll network sites in the monitored group are operational with no active events. No alarms with severity higher than informational are present. Key performance indicators are within normal thresholds.\n\n### Degraded\n\nOne or more sites are in maintenance mode or have active non-critical events. Performance metrics are elevated but service is available. Customer impact is limited or non-existent.\n\n### Critical\n\nOne or more sites are offline. Active critical or high-severity events are present. Service is disrupted or significantly degraded. Customer-facing services are affected."
+  },
+  {
+    "chunk_id": "network-health-monitoring::s3",
+    "document_id": "network-health-monitoring",
+    "document_title": "Network Health Monitoring Standards",
+    "section_heading": "Health Determination Logic",
+    "category": "network",
+    "chunk_index": 3,
+    "content": "The network health status is calculated using the following deterministic rules:\n\n1. If any sites in the monitored set have status \"offline\", the health is \"critical\".\n2. If any sites have active events with event_type \"maintenance\" or \"degradation\", the health is \"degraded\".\n3. Otherwise, the health is \"healthy\".\n\nThese rules are applied in priority order. Critical status overrides degraded, which overrides healthy."
+  },
+  {
+    "chunk_id": "network-health-monitoring::s4",
+    "document_id": "network-health-monitoring",
+    "document_title": "Network Health Monitoring Standards",
+    "section_heading": "Monitoring Endpoints",
+    "category": "network",
+    "chunk_index": 4,
+    "content": "### GET /api/network/health\n\nReturns aggregated network health for all sites or filtered by region. Response includes total sites, operational count, degraded count, maintenance count, offline count, overall status, and active event count.\n\n### GET /api/network/sites\n\nReturns individual site status with health indicators. Each site includes its current operational state, capacity utilization, and last maintenance timestamp."
+  },
+  {
+    "chunk_id": "network-health-monitoring::s5",
+    "document_id": "network-health-monitoring",
+    "document_title": "Network Health Monitoring Standards",
+    "section_heading": "Key Metrics",
+    "category": "network",
+    "chunk_index": 5,
+    "content": "### Site Availability\n\nMeasured as percentage of time a site is operational in a 24-hour window. Target is 99.9% for Tier 1 sites, 99.5% for Tier 2 sites, and 99.0% for Tier 3 sites.\n\n### Capacity Utilization\n\nCurrent utilization as percentage of total capacity. Thresholds: below 60% is normal, 60-80% is elevated, 80-95% is high, above 95% is critical.\n\n### Event Rate\n\nNumber of active events per site. More than 3 active events per site triggers a review. More than 5 active events per site triggers automatic escalation.\n\n### Response Time\n\nAverage round-trip time for synthetic probes. Baseline is established during the first 7 days of monitoring. Deviations greater than 50% from baseline trigger alerts."
+  },
+  {
+    "chunk_id": "network-health-monitoring::s6",
+    "document_id": "network-health-monitoring",
+    "document_title": "Network Health Monitoring Standards",
+    "section_heading": "Alert Thresholds",
+    "category": "network",
+    "chunk_index": 6,
+    "content": "### Immediate Alert (P1)\n\nSite offline for more than 5 minutes. More than 500 customers affected. Backbone link failure. Core router interface down.\n\n### Urgent Alert (P2)\n\nSite degraded for more than 15 minutes. Capacity above 90%. Error rate above 0.1%. BNG session count above 80% capacity.\n\n### Warning (P3)\n\nSite in maintenance for more than 4 hours. Capacity above 75%. Error rate above 0.01%. Backhaul utilization above 70%.\n\n### Informational (P4)\n\nScheduled maintenance starting. Capacity above 60%. Minor configuration change applied. Software update completed."
+  },
+  {
+    "chunk_id": "network-health-monitoring::s7",
+    "document_id": "network-health-monitoring",
+    "document_title": "Network Health Monitoring Standards",
+    "section_heading": "Dashboard Integration",
+    "category": "network",
+    "chunk_index": 7,
+    "content": "The monitoring data feeds into the Operations Overview dashboard. Key metrics displayed include network health status, site status counts, active events, and regional health breakdown. All metrics update in real-time through the API layer."
+  },
+  {
+    "chunk_id": "network-health-monitoring::s8",
+    "document_id": "network-health-monitoring",
+    "document_title": "Network Health Monitoring Standards",
+    "section_heading": "SLA Thresholds",
+    "category": "network",
+    "chunk_index": 8,
+    "content": "For enterprise customers, additional SLA-specific monitoring applies. Network availability must meet the terms specified in the customer's service level agreement. Breach of SLA thresholds triggers automatic escalation and customer notification."
+  },
+  {
+    "chunk_id": "cell-site-operations::s0",
+    "document_id": "cell-site-operations",
+    "document_title": "Cell Site Operations Guide",
+    "section_heading": "",
+    "category": "network",
+    "chunk_index": 0,
+    "content": "# Cell Site Operations Guide"
+  },
+  {
+    "chunk_id": "cell-site-operations::s1",
+    "document_id": "cell-site-operations",
+    "document_title": "Cell Site Operations Guide",
+    "section_heading": "Site Types",
+    "category": "network",
+    "chunk_index": 1,
+    "content": "### Macro Sites\n\nFull-size cell towers providing wide area coverage. Typically mounted on dedicated towers or building rooftops. Equipment includes baseband units, remote radio heads, antennas, and backhaul equipment. Macro sites serve the highest number of users and carry the most traffic.\n\n### Small Cells\n\nLow-power base stations for capacity injection in high-density areas. Mounted on street furniture, utility poles, or building facades. Used to fill coverage gaps and boost capacity in urban cores. Typically connect via fiber or microwave backhaul.\n\n### Distributed Antenna Systems (DAS)\n\nNetwork of antennas distributed throughout a building or venue. Used for indoor coverage in large facilities such as airports, stadiums, and convention centers. Connected to a central base station via fiber or coaxial cable."
+  },
+  {
+    "chunk_id": "cell-site-operations::s2",
+    "document_id": "cell-site-operations",
+    "document_title": "Cell Site Operations Guide",
+    "section_heading": "Site Status Codes",
+    "category": "network",
+    "chunk_index": 2,
+    "content": "### Operational\n\nSite is fully functional and serving customers. All equipment is powered and connected. No active alarms above informational level.\n\n### Degraded\n\nSite is operational but experiencing issues. May have reduced capacity, single-carrier operation, or minor equipment faults. Customers may experience degraded service quality.\n\n### Maintenance\n\nSite is undergoing planned work. May be partially or fully out of service during maintenance window. Customers should be notified before scheduled maintenance.\n\n### Offline\n\nSite is not operational. No service is being provided. Customers in the coverage area are affected. Immediate investigation is required."
+  },
+  {
+    "chunk_id": "cell-site-operations::s3",
+    "document_id": "cell-site-operations",
+    "document_title": "Cell Site Operations Guide",
+    "section_heading": "Capacity Management",
+    "category": "network",
+    "chunk_index": 3,
+    "content": "### Normal Utilization (0-60%)\n\nSite is operating well within capacity. No action required. Continue monitoring.\n\n### Elevated Utilization (60-80%)\n\nSite is approaching capacity limits. Schedule capacity upgrade assessment. Consider adding carriers or upgrading hardware. Monitor for further increases.\n\n### High Utilization (80-95%)\n\nSite is near maximum capacity. Initiate capacity expansion project. Implement traffic management policies. Consider temporary solutions such as COW (Cell on Wheels).\n\n### Critical Utilization (95%+)\n\nSite is at or beyond capacity. Immediate capacity injection required. Implement emergency traffic management. Prioritize voice over data if necessary."
+  },
+  {
+    "chunk_id": "cell-site-operations::s4",
+    "document_id": "cell-site-operations",
+    "document_title": "Cell Site Operations Guide",
+    "section_heading": "Backhaul Requirements",
+    "category": "network",
+    "chunk_index": 4,
+    "content": "### Fiber Backhaul\n\nPreferred for high-capacity sites. Minimum 1 Gbps for macro sites, 100 Mbps for small cells. Redundant paths required for Tier 1 sites. Latency must be below 5ms.\n\n### Microwave Backhaul\n\nUsed where fiber is not available. Minimum 200 Mbps for macro sites. Dual diversity required for reliable operation. Frequency coordination needed to avoid interference.\n\n### Satellite Backhaul\n\nUsed for remote sites only. Minimum 50 Mbps. High latency (600ms+) is expected. Used as temporary solution while fiber or microwave is deployed."
+  },
+  {
+    "chunk_id": "cell-site-operations::s5",
+    "document_id": "cell-site-operations",
+    "document_title": "Cell Site Operations Guide",
+    "section_heading": "Maintenance Procedures",
+    "category": "network",
+    "chunk_index": 5,
+    "content": "### Preventive Maintenance\n\nQuarterly inspection of all sites. Includes physical inspection, equipment testing, firmware updates, and cleaning. Battery backup testing monthly. Generator testing quarterly for sites with backup power.\n\n### Corrective Maintenance\n\nResponse based on site tier. Tier 1 sites: 4-hour response, 8-hour repair. Tier 2 sites: 8-hour response, 24-hour repair. Tier 3 sites: 24-hour response, 48-hour repair."
+  },
+  {
+    "chunk_id": "cell-site-operations::s6",
+    "document_id": "cell-site-operations",
+    "document_title": "Cell Site Operations Guide",
+    "section_heading": "Troubleshooting Checklist",
+    "category": "network",
+    "chunk_index": 6,
+    "content": "### No Service from Site\n\nVerify power supply is active. Check backhaul connectivity. Verify base station software is running. Check for alarms on management system. Verify antenna connections. Test with portable equipment if available.\n\n### Intermittent Service\n\nCheck for interference sources near the site. Verify antenna alignment and physical condition. Check for loose connections. Review error logs for patterns. Monitor during different times of day.\n\n### Capacity Issues\n\nReview traffic patterns and growth trends. Identify peak usage hours. Check for failed or degraded carriers. Consider adding carriers or upgrading to higher capacity hardware."
+  },
+  {
+    "chunk_id": "network-technology-overview::s0",
+    "document_id": "network-technology-overview",
+    "document_title": "Network Technology Overview",
+    "section_heading": "",
+    "category": "network",
+    "chunk_index": 0,
+    "content": "# Network Technology Overview"
+  },
+  {
+    "chunk_id": "network-technology-overview::s1",
+    "document_id": "network-technology-overview",
+    "document_title": "Network Technology Overview",
+    "section_heading": "LTE (4G)",
+    "category": "network",
+    "chunk_index": 1,
+    "content": "Long Term Evolution provides high-speed wireless broadband. Supports peak speeds up to 150 Mbps downlink and 50 Mbps uplink. Used for mobile broadband, IoT, and voice over LTE (VoLTE). Coverage is provided by macro and small cell sites across all regions.\n\n### LTE Coverage Bands\n\nBand 2 (1900 MHz): Primary coverage band for urban and suburban areas. Good balance of coverage and capacity.\n\nBand 4 (1700/2100 MHz): AWS band used for capacity in urban areas. Higher capacity but shorter range.\n\nBand 12 (700 MHz): Low-band for rural coverage and building penetration. Longer range but lower capacity.\n\nBand 66 (1700/2100 MHz): Extended AWS band for additional capacity."
+  },
+  {
+    "chunk_id": "network-technology-overview::s2",
+    "document_id": "network-technology-overview",
+    "document_title": "Network Technology Overview",
+    "section_heading": "5G NR",
+    "category": "network",
+    "chunk_index": 2,
+    "content": "New Radio provides next-generation wireless connectivity. Supports peak speeds up to 10 Gbps downlink. Used for enhanced mobile broadband, ultra-reliable low-latency communications, and massive machine-type communications.\n\n### 5G Deployment Modes\n\n#### Non-Standalone (NSA)\n\n5G NR deployed on top of existing LTE core. Provides increased capacity and speed without new core infrastructure. Uses EN-DC (EUTRA-NR Dual Connectivity) for device connection.\n\n#### Standalone (SA)\n\nFull 5G NR with 5G core. Enables all 5G features including network slicing and ultra-low latency. Deployed in select urban areas.\n\n### 5G Frequency Bands\n\nn71 (600 MHz): Low-band 5G for wide coverage. Good building penetration but limited capacity.\n\nn41 (2500 MHz): Mid-band 5G for balanced coverage and capacity. Primary 5G band for urban areas.\n\nn260 (39 GHz): mmWave 5G for ultra-high capacity in dense areas. Limited range and poor building penetration."
+  },
+  {
+    "chunk_id": "network-technology-overview::s3",
+    "document_id": "network-technology-overview",
+    "document_title": "Network Technology Overview",
+    "section_heading": "3G (Legacy)",
+    "category": "network",
+    "chunk_index": 3,
+    "content": "UMTS/HSPA technology providing basic mobile broadband. Supports peak speeds up to 42 Mbps downlink. Being phased out in favor of 4G and 5G. Still operational in some rural areas for backward compatibility."
+  },
+  {
+    "chunk_id": "network-technology-overview::s4",
+    "document_id": "network-technology-overview",
+    "document_title": "Network Technology Overview",
+    "section_heading": "Network Architecture",
+    "category": "network",
+    "chunk_index": 4,
+    "content": "### Radio Access Network (RAN)\n\nBase stations (eNodeB for LTE, gNodeB for 5G) provide wireless access. Connected to the core network via backhaul. Includes baseband processing, radio transmission, and antenna systems.\n\n### Core Network\n\nCentralized network functions including mobility management, session management, and subscriber management. Evolved Packet Core (EPC) for LTE. 5G Core (5GC) for 5G SA.\n\n### Transport Network\n\nInterconnects RAN and core network. Includes backhaul (site to aggregation), midhaul (aggregation to core), and fronthaul (baseband to radio). Fiber, microwave, and Ethernet are primary transport technologies."
+  },
+  {
+    "chunk_id": "network-technology-overview::s5",
+    "document_id": "network-technology-overview",
+    "document_title": "Network Technology Overview",
+    "section_heading": "Voice Services",
+    "category": "network",
+    "chunk_index": 5,
+    "content": "### VoLTE (Voice over LTE)\n\nIP-based voice service on LTE. Provides HD voice quality. Supports simultaneous voice and data. Required for voice service as 3G is retired.\n\n### VoNR (Voice over New Radio)\n\nIP-based voice service on 5G SA. Provides even lower latency and higher quality. Used in 5G standalone deployments.\n\n### VoWiFi (Voice over Wi-Fi)\n\nVoice service over Wi-Fi networks. Used for indoor coverage and areas with poor cellular coverage. Seamless handoff between Wi-Fi and cellular."
+  },
+  {
+    "chunk_id": "network-technology-overview::s6",
+    "document_id": "network-technology-overview",
+    "document_title": "Network Technology Overview",
+    "section_heading": "IoT Connectivity",
+    "category": "network",
+    "chunk_index": 6,
+    "content": "### NB-IoT (Narrowband IoT)\n\nLow-power wide-area technology for IoT devices. Supports deep indoor coverage. Used for smart metering, asset tracking, and environmental monitoring.\n\n### LTE-M (Cat-M1)\n\nMedium-power IoT technology. Supports mobility and handover. Used for connected vehicles, wearable devices, and industrial IoT."
+  },
+  {
+    "chunk_id": "spectrum-management::s0",
+    "document_id": "spectrum-management",
+    "document_title": "Spectrum Management and Allocation",
+    "section_heading": "",
+    "category": "network",
+    "chunk_index": 0,
+    "content": "# Spectrum Management and Allocation"
+  },
+  {
+    "chunk_id": "spectrum-management::s1",
+    "document_id": "spectrum-management",
+    "document_title": "Spectrum Management and Allocation",
+    "section_heading": "Overview",
+    "category": "network",
+    "chunk_index": 1,
+    "content": "This document describes how SmartConnect manages and allocates wireless spectrum across its network. Spectrum is a finite resource that must be carefully managed to ensure optimal network performance."
+  },
+  {
+    "chunk_id": "spectrum-management::s2",
+    "document_id": "spectrum-management",
+    "document_title": "Spectrum Management and Allocation",
+    "section_heading": "Licensed Spectrum Holdings",
+    "category": "network",
+    "chunk_index": 2,
+    "content": "### Low-Band Spectrum (600-900 MHz)\n\nProvides wide area coverage and excellent building penetration. Used primarily for rural coverage and indoor penetration in urban areas. Includes 600 MHz (n71/71), 700 MHz (B12), and 850 MHz bands. These bands carry voice and low-bandwidth data services.\n\n### Mid-Band Spectrum (1.7-3.7 GHz)\n\nProvides balanced coverage and capacity. Primary bands for urban and suburban capacity. Includes 1700/2100 MHz (B4/B66), 1900 MHz (B2), and 2500 MHz (B41/n41) bands. These bands carry the majority of mobile broadband traffic.\n\n### High-Band Spectrum (24-39 GHz)\n\nProvides ultra-high capacity in dense areas. Limited range and building penetration. Used for hotspots, venues, and dense urban cores. Includes 28 GHz and 39 GHz (n260) bands. These bands support peak data rates."
+  },
+  {
+    "chunk_id": "spectrum-management::s3",
+    "document_id": "spectrum-management",
+    "document_title": "Spectrum Management and Allocation",
+    "section_heading": "Spectrum Allocation Rules",
+    "category": "network",
+    "chunk_index": 3,
+    "content": "### Voice Priority\n\nVoice services always receive priority allocation during congestion. VoLTE and VoNR calls are allocated dedicated bearers with guaranteed bit rates. Voice traffic cannot be deprioritized or throttled.\n\n### Data Traffic Management\n\nBest-effort data traffic is managed using quality of service (QoS) classes. Streaming video is allocated medium priority. Web browsing is allocated standard priority. File downloads and backups are allocated low priority.\n\n### IoT Allocation\n\nIoT devices are allocated narrow bandwidth channels. NB-IoT uses 180 kHz channels. LTE-M uses 1.4 MHz channels. These allocations are isolated from consumer traffic."
+  },
+  {
+    "chunk_id": "spectrum-management::s4",
+    "document_id": "spectrum-management",
+    "document_title": "Spectrum Management and Allocation",
+    "section_heading": "Interference Management",
+    "category": "network",
+    "chunk_index": 4,
+    "content": "### External Interference\n\nCaused by non-network sources such as illegal transmitters, faulty electronics, or adjacent systems. Detected through spectrum monitoring and customer reports. Resolution involves coordination with regulatory authorities.\n\n### Internal Interference\n\nCaused by network elements such as adjacent cells or overlapping frequencies. Managed through frequency planning and power control. Coordinated multipoint (CoMP) techniques reduce inter-cell interference."
+  },
+  {
+    "chunk_id": "spectrum-management::s5",
+    "document_id": "spectrum-management",
+    "document_title": "Spectrum Management and Allocation",
+    "section_heading": "Carrier Aggregation",
+    "category": "network",
+    "chunk_index": 5,
+    "content": "Combines multiple frequency carriers to increase bandwidth. Up to 5 carriers can be aggregated in LTE. Up to 16 carriers in 5G NR. Carrier aggregation is dynamically adjusted based on network load and device capabilities."
+  },
+  {
+    "chunk_id": "spectrum-management::s6",
+    "document_id": "spectrum-management",
+    "document_title": "Spectrum Management and Allocation",
+    "section_heading": "Dynamic Spectrum Sharing",
+    "category": "network",
+    "chunk_index": 6,
+    "content": "Allows simultaneous operation of LTE and 5G NR on the same frequency band. Resources are allocated based on demand. Enables smooth transition from 4G to 5G without requiring separate spectrum allocations."
+  },
+  {
+    "chunk_id": "mobile-data-troubleshooting::s0",
+    "document_id": "mobile-data-troubleshooting",
+    "document_title": "Mobile Data Connectivity Troubleshooting",
+    "section_heading": "",
+    "category": "connectivity",
+    "chunk_index": 0,
+    "content": "# Mobile Data Connectivity Troubleshooting"
+  },
+  {
+    "chunk_id": "mobile-data-troubleshooting::s1",
+    "document_id": "mobile-data-troubleshooting",
+    "document_title": "Mobile Data Connectivity Troubleshooting",
+    "section_heading": "Common Symptoms",
+    "category": "connectivity",
+    "chunk_index": 1,
+    "content": "### No Data Connection\n\nDevice shows signal bars but cannot access internet. Web pages fail to load. Applications cannot connect. Speed test shows 0 Mbps or fails entirely.\n\n### Slow Data\n\nPages load slowly. Video buffers frequently. Applications time out. Speed test shows significantly lower than expected speeds.\n\n### Intermittent Data\n\nConnection drops periodically. Applications disconnect and reconnect. Downloads fail partway through. Web pages partially load."
+  },
+  {
+    "chunk_id": "mobile-data-troubleshooting::s2",
+    "document_id": "mobile-data-troubleshooting",
+    "document_title": "Mobile Data Connectivity Troubleshooting",
+    "section_heading": "Diagnostic Steps",
+    "category": "connectivity",
+    "chunk_index": 2,
+    "content": "### Step 1: Check Device Status\n\nVerify mobile data is enabled in device settings. Check that airplane mode is off. Confirm SIM card is active and not locked. Verify APN settings are correct.\n\n### Step 2: Check Network Coverage\n\nCheck coverage map for the user's location. Verify the site serving the user is operational. Check for active network events in the area. Confirm the user's subscription includes data service.\n\n### Step 3: Run Speed Test\n\nUse the network speed test tool. Record download and upload speeds. Note latency and jitter values. Compare against plan expectations.\n\n### Step 4: Check for Congestion\n\nReview site capacity utilization. Check time of day for peak usage. Look for recent traffic spikes. Verify no maintenance is in progress."
+  },
+  {
+    "chunk_id": "mobile-data-troubleshooting::s3",
+    "document_id": "mobile-data-troubleshooting",
+    "document_title": "Mobile Data Connectivity Troubleshooting",
+    "section_heading": "Resolution Procedures",
+    "category": "connectivity",
+    "chunk_index": 3,
+    "content": "### APN Configuration Issues\n\nIf APN settings are incorrect, guide the user through resetting APN to default. For Android: Settings > Mobile Networks > Access Point Names > Reset to default. For iOS: Settings > Cellular > Cellular Data Options > Reset Settings. After reset, reboot the device.\n\n### SIM Card Issues\n\nIf SIM shows as invalid, try reseating the SIM card. If SIM is locked, guide user through PUK code entry. If SIM is damaged, arrange replacement. If SIM is suspended, verify account status.\n\n### Network Registration Issues\n\nIf device is not registered on the network, toggle airplane mode on and off. If persistent, manually select network operator. If still unresolved, check for SIM provisioning issues.\n\n### Speed Issues\n\nIf speed is low despite good signal, check for background app data usage. Verify no VPN is active. Check for data throttling due to plan limits. Test at different times to rule out congestion."
+  },
+  {
+    "chunk_id": "mobile-data-troubleshooting::s4",
+    "document_id": "mobile-data-troubleshooting",
+    "document_title": "Mobile Data Connectivity Troubleshooting",
+    "section_heading": "Advanced Diagnostics",
+    "category": "connectivity",
+    "chunk_index": 4,
+    "content": "### Signal Quality Analysis\n\nReference Signal Received Power (RSRP): Above -80 dBm is excellent, -80 to -90 dBm is good, -90 to -100 dBm is fair, below -100 dBm is poor.\n\nReference Signal Received Quality (RSRQ): Above -10 dB is excellent, -10 to -15 dB is good, -15 to -20 dB is fair, below -20 dB is poor.\n\nSignal to Interference plus Noise Ratio (SINR): Above 20 dB is excellent, 13-20 dB is good, 0-13 dB is fair, below 0 dB is poor.\n\n### Handover Issues\n\nCheck for frequent handovers between cells. Review handover failure rates. Check for ping-pong handovers between overlapping cells. Verify handover parameters are optimized."
+  },
+  {
+    "chunk_id": "mobile-data-troubleshooting::s5",
+    "document_id": "mobile-data-troubleshooting",
+    "document_title": "Mobile Data Connectivity Troubleshooting",
+    "section_heading": "Escalation Criteria",
+    "category": "connectivity",
+    "chunk_index": 5,
+    "content": "Escalate to Tier 2 support if: issue persists after all standard troubleshooting, device is not compatible with network bands, multiple users in same area report similar issues, or issue requires network-side investigation."
+  },
+  {
+    "chunk_id": "wifi-calling-setup::s0",
+    "document_id": "wifi-calling-setup",
+    "document_title": "Wi-Fi Calling Setup and Troubleshooting",
+    "section_heading": "",
+    "category": "connectivity",
+    "chunk_index": 0,
+    "content": "# Wi-Fi Calling Setup and Troubleshooting"
+  },
+  {
+    "chunk_id": "wifi-calling-setup::s1",
+    "document_id": "wifi-calling-setup",
+    "document_title": "Wi-Fi Calling Setup and Troubleshooting",
+    "section_heading": "Overview",
+    "category": "connectivity",
+    "chunk_index": 1,
+    "content": "Wi-Fi Calling (VoWiFi) allows customers to make and receive calls over Wi-Fi networks when cellular coverage is poor or unavailable. This service uses the customer's existing phone number and plan minutes."
+  },
+  {
+    "chunk_id": "wifi-calling-setup::s2",
+    "document_id": "wifi-calling-setup",
+    "document_title": "Wi-Fi Calling Setup and Troubleshooting",
+    "section_heading": "Prerequisites",
+    "category": "connectivity",
+    "chunk_index": 2,
+    "content": "### Device Requirements\n\nDevice must support Wi-Fi Calling. Most modern smartphones support this feature. Check device specifications for compatibility. Device software must be up to date.\n\n### Account Requirements\n\nCustomer must have an active postpaid account. Wi-Fi Calling must be enabled on the account. Customer must have a compatible device. SIM card must be provisioned for Wi-Fi Calling.\n\n### Network Requirements\n\nDevice needs a working Wi-Fi internet connection. Minimum 1 Mbps for HD voice calls. Minimum 2 Mbps for video calls. Stable connection with low packet loss."
+  },
+  {
+    "chunk_id": "wifi-calling-setup::s3",
+    "document_id": "wifi-calling-setup",
+    "document_title": "Wi-Fi Calling Setup and Troubleshooting",
+    "section_heading": "Setup Procedures",
+    "category": "connectivity",
+    "chunk_index": 3,
+    "content": "### Android Devices\n\n1. Open Settings on the device.\n2. Navigate to Connections or Network & Internet.\n3. Select Wi-Fi Calling.\n4. Toggle Wi-Fi Calling to On.\n5. Select calling preference: Wi-Fi Preferred or Cellular Preferred.\n6. Complete any additional prompts.\n\n### iOS Devices\n\n1. Open Settings on the device.\n2. Navigate to Phone or Cellular.\n3. Select Wi-Fi Calling.\n4. Toggle Wi-Fi Calling to On.\n5. Confirm the emergency address when prompted.\n6. Complete any additional prompts.\n\n### Emergency Address Registration\n\nWi-Fi Calling requires a registered emergency address for E911 services. During setup, device will prompt for emergency address. Enter the primary address where the device will be used. Verify the address is correct. Update if address changes."
+  },
+  {
+    "chunk_id": "wifi-calling-setup::s4",
+    "document_id": "wifi-calling-setup",
+    "document_title": "Wi-Fi Calling Setup and Troubleshooting",
+    "section_heading": "Troubleshooting",
+    "category": "connectivity",
+    "chunk_index": 4,
+    "content": "### Wi-Fi Calling Not Available\n\nVerify Wi-Fi Calling is enabled on the account. Check device compatibility. Ensure device software is up to date. Verify SIM card is active. Restart device and try again.\n\n### Calls Not Connecting Over Wi-Fi\n\nCheck Wi-Fi internet connection is working. Verify Wi-Fi Calling is enabled in device settings. Check for firewall or port blocking on the Wi-Fi network. Required ports: UDP 500, UDP 4500, and IP protocol 50.\n\n### Poor Call Quality on Wi-Fi\n\nCheck Wi-Fi signal strength. Minimum 2 bars recommended. Verify internet connection speed meets requirements. Reduce number of devices on the Wi-Fi network. Move closer to the Wi-Fi router. Consider using 5 GHz Wi-Fi band instead of 2.4 GHz.\n\n### Calls Dropping When Switching Between Wi-Fi and Cellular\n\nThis is normal behavior during initial setup. Seamless handoff improves after a few calls. Ensure both Wi-Fi Calling and cellular are enabled. Check device settings for handover preferences. Update device software if issue persists."
+  },
+  {
+    "chunk_id": "wifi-calling-setup::s5",
+    "document_id": "wifi-calling-setup",
+    "document_title": "Wi-Fi Calling Setup and Troubleshooting",
+    "section_heading": "Known Limitations",
+    "category": "connectivity",
+    "chunk_index": 5,
+    "content": "Wi-Fi Calling does not support premium SMS services. Some carrier-specific features may not be available over Wi-Fi. Emergency calls may use the registered Wi-Fi Calling address rather than current location. Video calling over Wi-Fi may have lower quality than over cellular."
+  },
+  {
+    "chunk_id": "apn-configuration::s0",
+    "document_id": "apn-configuration",
+    "document_title": "APN Configuration Guide",
+    "section_heading": "",
+    "category": "connectivity",
+    "chunk_index": 0,
+    "content": "# APN Configuration Guide"
+  },
+  {
+    "chunk_id": "apn-configuration::s1",
+    "document_id": "apn-configuration",
+    "document_title": "APN Configuration Guide",
+    "section_heading": "What is an APN",
+    "category": "connectivity",
+    "chunk_index": 1,
+    "content": "Access Point Name (APN) is the gateway between the mobile network and the internet. It determines the network path for all data traffic. Correct APN configuration is essential for mobile data to function."
+  },
+  {
+    "chunk_id": "apn-configuration::s2",
+    "document_id": "apn-configuration",
+    "document_title": "APN Configuration Guide",
+    "section_heading": "Default APN Settings",
+    "category": "connectivity",
+    "chunk_index": 2,
+    "content": "### SmartConnect Internet APN\n\nName: SmartConnect Internet  \nAPN: smartconnect.internet  \nProxy: Not set  \nPort: Not set  \nUsername: Not set  \nPassword: Not set  \nServer: Not set  \nMMSC: Not set  \nMMS Proxy: Not set  \nMMS Port: Not set  \nMCC: 310  \nMNC: 260  \nAuthentication type: None  \nAPN type: default,supl  \nAPN protocol: IPv4/IPv6  \nAPN roaming protocol: IPv4\n\n### SmartConnect MMS APN\n\nName: SmartConnect MMS  \nAPN: smartconnect.mms  \nProxy: Not set  \nPort: Not set  \nUsername: Not set  \nPassword: Not set  \nServer: Not set  \nMMSC: http://mmsc.smartconnect.com  \nMMS Proxy: mmsproxy.smartconnect.com  \nMMS Port: 8080  \nMCC: 310  \nMNC: 260  \nAuthentication type: None  \nAPN type: mms  \nAPN protocol: IPv4/IPv6  \nAPN roaming protocol: IPv4"
+  },
+  {
+    "chunk_id": "apn-configuration::s3",
+    "document_id": "apn-configuration",
+    "document_title": "APN Configuration Guide",
+    "section_heading": "Configuration Procedures",
+    "category": "connectivity",
+    "chunk_index": 3,
+    "content": "### Android Configuration\n\n1. Open Settings.\n2. Navigate to Mobile Networks > Access Point Names.\n3. Tap the menu icon and select New APN.\n4. Enter the APN settings as listed above.\n5. Save the new APN.\n6. Select the new APN as the active APN.\n7. Restart the device.\n\n### iOS Configuration\n\niOS devices typically configure APN automatically through the carrier settings update. If manual configuration is needed:\n\n1. Open Settings.\n2. Navigate to Cellular > Cellular Data Options > Cellular Network.\n3. Enter the APN settings under the Cellular Data section.\n4. For MMS, enter the MMS settings under the MMS section.\n5. Restart the device.\n\n### Automatic Configuration\n\nMost devices will automatically configure APN settings when a SmartConnect SIM is inserted. If data does not work after inserting the SIM, try: removing and reinserting the SIM, toggling airplane mode, or restarting the device. If automatic configuration fails, use manual configuration above."
+  },
+  {
+    "chunk_id": "apn-configuration::s4",
+    "document_id": "apn-configuration",
+    "document_title": "APN Configuration Guide",
+    "section_heading": "Troubleshooting",
+    "category": "connectivity",
+    "chunk_index": 4,
+    "content": "### Data Not Working After APN Change\n\nVerify the APN settings match the defaults exactly. Check for typos in the APN name or settings. Ensure the APN is selected as active. Restart the device after making changes. If issues persist, reset APN to defaults and reconfigure.\n\n### MMS Not Working\n\nVerify MMS APN is configured correctly. Check that mobile data is enabled. Verify the messaging app has necessary permissions. Check for sufficient storage space on the device. Test MMS by sending a picture message.\n\n### Roaming Data Not Working\n\nVerify roaming is enabled on the device. Check that roaming is enabled on the account. Verify the roaming APN settings. Some devices require manual APN configuration while roaming. Contact support if roaming data still does not work."
+  },
+  {
+    "chunk_id": "service-activation::s0",
+    "document_id": "service-activation",
+    "document_title": "Service Activation Procedures",
+    "section_heading": "",
+    "category": "connectivity",
+    "chunk_index": 0,
+    "content": "# Service Activation Procedures"
+  },
+  {
+    "chunk_id": "service-activation::s1",
+    "document_id": "service-activation",
+    "document_title": "Service Activation Procedures",
+    "section_heading": "Overview",
+    "category": "connectivity",
+    "chunk_index": 1,
+    "content": "This document describes the procedures for activating new services and modifying existing services for SmartConnect customers."
+  },
+  {
+    "chunk_id": "service-activation::s2",
+    "document_id": "service-activation",
+    "document_title": "Service Activation Procedures",
+    "section_heading": "New Line Activation",
+    "category": "connectivity",
+    "chunk_index": 2,
+    "content": "### Pre-Activation Checks\n\nVerify customer identity and account status. Confirm the customer has a valid IMEI for the device they will use. Check that the desired phone number is available. Verify the selected plan is available for the customer's segment. Confirm the customer understands the service terms and pricing.\n\n### Activation Steps\n\n1. Create or locate the customer account in the billing system.\n2. Select the desired plan and add it to the order.\n3. Generate a new SIM card assignment or eSIM profile.\n4. Associate the SIM with the customer account and selected plan.\n5. Provision network access for the new subscription.\n6. Configure the customer's device with the correct APN settings.\n7. Verify service is working by placing a test call and using data.\n8. Send welcome SMS and email with account details.\n\n### Post-Activation Verification\n\nMake a test call to verify voice service. Send a test SMS to verify messaging. Run a speed test to verify data service. Verify the customer can access their account portal. Confirm billing is set up correctly."
+  },
+  {
+    "chunk_id": "service-activation::s3",
+    "document_id": "service-activation",
+    "document_title": "Service Activation Procedures",
+    "section_heading": "Plan Change Procedures",
+    "category": "connectivity",
+    "chunk_index": 3,
+    "content": "### Upgrade\n\nVerify the customer's eligibility for the new plan. Check for any contract commitments that may be affected. Calculate any prorated charges for the current billing cycle. Apply the new plan effective immediately or at next billing cycle. Notify the customer of the change and new features.\n\n### Downgrade\n\nVerify the customer understands the features they will lose. Check for any minimum plan requirements. Calculate any prorated credits for the current billing cycle. Apply the new plan effective at next billing cycle unless customer requests immediate. Notify the customer of the change.\n\n### Plan Migration\n\nWhen discontinuing a plan, migrate affected customers to the closest equivalent plan. Notify customers at least 30 days before the migration. Provide comparison of old and new plan features. Offer promotional pricing if available. Assist with any device changes needed."
+  },
+  {
+    "chunk_id": "service-activation::s4",
+    "document_id": "service-activation",
+    "document_title": "Service Activation Procedures",
+    "section_heading": "Device Activation",
+    "category": "connectivity",
+    "chunk_index": 4,
+    "content": "### New Device on Existing Line\n\nVerify the new device IMEI is compatible with the network. Check for any device locks or blacklisting. Provision the new device on the customer's existing line. Transfer any service features to the new device. Verify all services work on the new device.\n\n### SIM Swap\n\nVerify the customer's identity before processing. Deactivate the old SIM immediately. Activate the new SIM with the same phone number and plan. Verify service is restored on the new SIM. The old SIM becomes permanently inactive.\n\n### eSIM Activation\n\nVerify the device supports eSIM. Generate an eSIM QR code for the customer. Guide the customer through scanning the QR code. Verify the eSIM is activated and service is working. Deactivate any physical SIM if being replaced."
+  },
+  {
+    "chunk_id": "service-activation::s5",
+    "document_id": "service-activation",
+    "document_title": "Service Activation Procedures",
+    "section_heading": "Service Suspension",
+    "category": "connectivity",
+    "chunk_index": 5,
+    "content": "### Voluntary Suspension\n\nCustomer requests temporary service suspension. Maximum suspension period is 90 days. A reduced monthly fee applies during suspension. All services are suspended including voice, data, and messaging. Service resumes automatically after the suspension period or upon customer request.\n\n### Involuntary Suspension\n\nTriggered by non-payment or policy violation. Customer is notified before suspension takes effect. Suspension occurs after the grace period expires. All services are suspended. Customer must resolve the issue to restore service."
+  },
+  {
+    "chunk_id": "service-activation::s6",
+    "document_id": "service-activation",
+    "document_title": "Service Activation Procedures",
+    "section_heading": "Service Restoration",
+    "category": "connectivity",
+    "chunk_index": 6,
+    "content": "Verify the issue causing suspension is resolved. Reactivate the subscription in the billing system. Provision network access for the subscription. Verify all services are working. Notify the customer that service has been restored. Apply any applicable restoration fees."
+  },
+  {
+    "chunk_id": "coverage-issues::s0",
+    "document_id": "coverage-issues",
+    "document_title": "Coverage Issue Resolution",
+    "section_heading": "",
+    "category": "connectivity",
+    "chunk_index": 0,
+    "content": "# Coverage Issue Resolution"
+  },
+  {
+    "chunk_id": "coverage-issues::s1",
+    "document_id": "coverage-issues",
+    "document_title": "Coverage Issue Resolution",
+    "section_heading": "Coverage Definitions",
+    "category": "connectivity",
+    "chunk_index": 1,
+    "content": "### Good Coverage\n\nRSRP above -90 dBm. RSRQ above -10 dB. SINR above 13 dB. Consistent signal without drops. Full speed data and reliable voice calls.\n\n### Fair Coverage\n\nRSRP between -90 and -105 dBm. RSRQ between -10 and -15 dB. SINR between 0 and 13 dB. Signal may vary. Data may be slower during peak hours. Voice calls generally work.\n\n### Poor Coverage\n\nRSRP below -105 dBm. RSRQ below -15 dB. SINR below 0 dB. Inconsistent signal. Frequent drops. Very slow data. Dropped calls likely.\n\n### No Coverage\n\nNo detectable signal from any SmartConnect site. Device shows no service. No calls, texts, or data available."
+  },
+  {
+    "chunk_id": "coverage-issues::s2",
+    "document_id": "coverage-issues",
+    "document_title": "Coverage Issue Resolution",
+    "section_heading": "Common Coverage Issues",
+    "category": "connectivity",
+    "chunk_index": 2,
+    "content": "### Indoor Coverage Gaps\n\nLow-band spectrum (600-700 MHz) provides best indoor penetration. Mid-band spectrum (1.7-2.5 GHz) provides moderate indoor coverage. High-band spectrum (mmWave) has poor indoor penetration. Building materials affect signal penetration significantly.\n\nResolution: Recommend Wi-Fi Calling for persistent indoor issues. Check if the building has a DAS or small cell. Suggest a signal booster for single-location improvement. Report coverage gap for network planning.\n\n### Rural Coverage Gaps\n\nLow population density makes rural coverage expensive. Low-band spectrum provides the widest rural coverage. Satellite backhaul may limit rural site capacity. Terrain affects coverage significantly.\n\nResolution: Verify the customer is within the coverage area. Check for known coverage gaps in the area. Suggest alternative carrier options if SmartConnect does not cover the area. Log the coverage gap for network expansion planning.\n\n### Outdoor Dead Zones\n\nDead zones can occur between cell sites. Terrain features like hills and valleys cause dead zones. Dense urban environments with tall buildings cause signal shadowing. Construction zones may temporarily affect coverage.\n\nResolution: Verify the exact location of the dead zone. Check if it is a known coverage gap. Report the dead zone for network investigation. Suggest workaround routes or locations for consistent service."
+  },
+  {
+    "chunk_id": "coverage-issues::s3",
+    "document_id": "coverage-issues",
+    "document_title": "Coverage Issue Resolution",
+    "section_heading": "Coverage Investigation Process",
+    "category": "connectivity",
+    "chunk_index": 3,
+    "content": "### Step 1: Verify the Issue\n\nConfirm the customer is within the SmartConnect coverage area. Check the coverage map for the reported location. Verify the customer's device supports the required frequency bands. Check for active network events in the area.\n\n### Step 2: Gather Information\n\nCollect the exact location of the coverage issue. Determine if the issue is indoors or outdoors. Note the time of day and duration of the issue. Ask about surrounding buildings or terrain features. Collect device model and operating system information.\n\n### Step 3: Check Network Status\n\nReview the site serving the area for any active events. Check site capacity and utilization. Verify site configuration and antenna alignment. Check for recent changes to the site.\n\n### Step 4: Escalate if Needed\n\nIf the issue is confirmed and not resolved by standard troubleshooting, escalate to network engineering. Provide all collected information including location, device details, and network status. The network team will investigate and plan resolution."
+  },
+  {
+    "chunk_id": "coverage-issues::s4",
+    "document_id": "coverage-issues",
+    "document_title": "Coverage Issue Resolution",
+    "section_heading": "Coverage Improvement Solutions",
+    "category": "connectivity",
+    "chunk_index": 4,
+    "content": "### Small Cell Deployment\n\nLow-power base stations for targeted coverage improvement. Ideal for filling specific coverage gaps. Faster to deploy than macro sites. Used in urban areas for capacity and coverage.\n\n### DAS Installation\n\nDistributed antenna systems for large buildings and venues. Provides consistent indoor coverage. Requires coordination with building management. Used for airports, stadiums, and convention centers.\n\n### Macro Site Construction\n\nNew tower sites for wide area coverage. Longest deployment timeline. Highest cost but provides comprehensive coverage. Used for new coverage areas and major capacity upgrades."
+  },
+  {
+    "chunk_id": "billing-cycle-management::s0",
+    "document_id": "billing-cycle-management",
+    "document_title": "Billing Cycle Management",
+    "section_heading": "",
+    "category": "billing",
+    "chunk_index": 0,
+    "content": "# Billing Cycle Management"
+  },
+  {
+    "chunk_id": "billing-cycle-management::s1",
+    "document_id": "billing-cycle-management",
+    "document_title": "Billing Cycle Management",
+    "section_heading": "Overview",
+    "category": "billing",
+    "chunk_index": 1,
+    "content": "This document describes how SmartConnect manages billing cycles, charges, and credits for customer accounts."
+  },
+  {
+    "chunk_id": "billing-cycle-management::s2",
+    "document_id": "billing-cycle-management",
+    "document_title": "Billing Cycle Management",
+    "section_heading": "Billing Cycle Structure",
+    "category": "billing",
+    "chunk_index": 2,
+    "content": "### Monthly Billing\n\nMost plans are billed monthly on the anniversary of the service activation date. The billing cycle day is set at activation and remains consistent each month. Charges are prorated for the first and last month of service.\n\n### Billing Cycle Day\n\nThe billing cycle day (BCD) is the day of the month when the bill is generated. This is determined by the customer's activation date. For example, if activated on the 15th, the BCD is the 15th of each month. The customer can request a BCD change, which may result in a short or long billing cycle.\n\n### Bill Generation\n\nBills are generated on the BCD and include all charges for the billing period. Charges include recurring plan fees, usage charges, taxes, and fees. Credits and adjustments are applied before the final amount is calculated."
+  },
+  {
+    "chunk_id": "billing-cycle-management::s3",
+    "document_id": "billing-cycle-management",
+    "document_title": "Billing Cycle Management",
+    "section_heading": "Prorated Charges",
+    "category": "billing",
+    "chunk_index": 3,
+    "content": "### First Month Proration\n\nWhen a customer activates mid-cycle, the first month is prorated. The proration is based on the number of days remaining in the billing cycle. For example, if activated on the 20th and the cycle ends on the 30th, the customer is charged for 11 days.\n\n### Last Month Proration\n\nWhen a customer deactivates mid-cycle, the final month is prorated. The proration is based on the number of days the service was active in the billing cycle. Any unused portion of the billing cycle is credited.\n\n### Plan Change Proration\n\nWhen a customer changes plans mid-cycle, charges are prorated. The old plan is prorated for the days it was active. The new plan is prorated for the remaining days. The difference is charged or credited accordingly."
+  },
+  {
+    "chunk_id": "billing-cycle-management::s4",
+    "document_id": "billing-cycle-management",
+    "document_title": "Billing Cycle Management",
+    "section_heading": "Credits and Adjustments",
+    "category": "billing",
+    "chunk_index": 4,
+    "content": "### Service Credits\n\nCredits for service disruptions or quality issues. Must be approved by a supervisor. Applied to the customer's next bill. Documented with a reason code and description.\n\n### Goodwill Credits\n\nCredits offered as a gesture of goodwill. Typically for customer retention or complaint resolution. Must be approved by a supervisor. Applied to the customer's next bill.\n\n### Promotional Credits\n\nCredits from promotional offers or discounts. Applied automatically based on the promotion terms. May be recurring or one-time. Expire at the end of the promotional period."
+  },
+  {
+    "chunk_id": "billing-cycle-management::s5",
+    "document_id": "billing-cycle-management",
+    "document_title": "Billing Cycle Management",
+    "section_heading": "Late Payment and Non-Payment",
+    "category": "billing",
+    "chunk_index": 5,
+    "content": "### Late Payment Fee\n\nA late payment fee is charged if payment is not received by the due date. The fee is a percentage of the outstanding balance. The fee is capped at a maximum amount per billing cycle. Customers are notified before the late fee is applied.\n\n### Grace Period\n\nA grace period of 10 days is provided after the bill due date. No late fees are charged during the grace period. Service is not affected during the grace period. After the grace period, late fees are applied and service may be suspended.\n\n### Non-Payment Suspension\n\nIf payment is not received within 30 days of the due date, service may be suspended. The customer is notified before suspension. All services including voice, data, and messaging are suspended. The customer must pay the outstanding balance plus any reconnection fees to restore service."
+  },
+  {
+    "chunk_id": "billing-cycle-management::s6",
+    "document_id": "billing-cycle-management",
+    "document_title": "Billing Cycle Management",
+    "section_heading": "Refund Policy",
+    "category": "billing",
+    "chunk_index": 6,
+    "content": "### Voluntary Cancellation Refund\n\nCustomers who cancel within the first 14 days receive a full refund minus any usage charges. Customers who cancel after 14 days receive a prorated refund for the unused portion of the current billing cycle. Any device subsidies or promotional balances become due immediately upon cancellation.\n\n### Involuntary Termination Refund\n\nCustomers whose service is terminated due to non-payment do not receive a refund. Any device financing balances become due immediately. The account may be sent to collections if the balance remains unpaid."
+  },
+  {
+    "chunk_id": "data-usage-throttling::s0",
+    "document_id": "data-usage-throttling",
+    "document_title": "Data Usage and Throttling Policies",
+    "section_heading": "",
+    "category": "billing",
+    "chunk_index": 0,
+    "content": "# Data Usage and Throttling Policies"
+  },
+  {
+    "chunk_id": "data-usage-throttling::s1",
+    "document_id": "data-usage-throttling",
+    "document_title": "Data Usage and Throttling Policies",
+    "section_heading": "Data Plan Tiers",
+    "category": "billing",
+    "chunk_index": 1,
+    "content": "### Basic Plan\n\nIncludes 5 GB of high-speed data per month. After the data limit is reached, data speeds are reduced to 128 Kbps for the remainder of the billing cycle. The reduced speed applies to all data usage. The data limit resets at the beginning of the next billing cycle.\n\n### Standard Plan\n\nIncludes 15 GB of high-speed data per month. After the data limit is reached, data speeds are reduced to 256 Kbps for the remainder of the billing cycle. The reduced speed applies to all data usage. The data limit resets at the beginning of the next billing cycle.\n\n### Premium Plan\n\nIncludes 50 GB of high-speed data per month. After the data limit is reached, data speeds are reduced to 512 Kbps for the remainder of the billing cycle. The reduced speed applies to all data usage. The data limit resets at the beginning of the next billing cycle.\n\n### Unlimited Plan\n\nIncludes unlimited high-speed data with no throttling. Subject to fair use policy. May be deprioritized during network congestion after 100 GB of usage. Deprioritization is temporary and based on network conditions."
+  },
+  {
+    "chunk_id": "data-usage-throttling::s2",
+    "document_id": "data-usage-throttling",
+    "document_title": "Data Usage and Throttling Policies",
+    "section_heading": "Throttling Mechanism",
+    "category": "billing",
+    "chunk_index": 2,
+    "content": "### Speed Reduction\n\nWhen a customer reaches their data limit, speed is reduced to the plan's throttled rate. The throttled rate is applied to all data traffic. No data is blocked, only slowed. The customer remains connected at the reduced speed.\n\n### Data Usage Tracking\n\nData usage is tracked in real-time. Usage is recorded in 1 KB increments. The customer can check their current usage via the mobile app or customer portal. Usage updates may have a delay of up to 15 minutes.\n\n### Throttle Removal\n\nSpeed restrictions are removed at the start of the next billing cycle. No action is required by the customer. The transition is automatic. If the customer upgrades their plan mid-cycle, the new plan's data limit applies immediately."
+  },
+  {
+    "chunk_id": "data-usage-throttling::s3",
+    "document_id": "data-usage-throttling",
+    "document_title": "Data Usage and Throttling Policies",
+    "section_heading": "Overage Charges",
+    "category": "billing",
+    "chunk_index": 3,
+    "content": "### Pay-Per-Use Overage\n\nCustomers on plans with data limits can opt for pay-per-use overage. Overage is charged at $10 per additional GB. Overage charges are capped at $50 per billing cycle. The cap does not include the base plan charge.\n\n### Data Top-Up\n\nCustomers can purchase additional high-speed data at any time. Data top-up is available in 1 GB increments. Each 1 GB top-up costs $10. Top-up data does not roll over to the next billing cycle."
+  },
+  {
+    "chunk_id": "data-usage-throttling::s4",
+    "document_id": "data-usage-throttling",
+    "document_title": "Data Usage and Throttling Policies",
+    "section_heading": "Data Usage Monitoring",
+    "category": "billing",
+    "chunk_index": 4,
+    "content": "### Mobile App\n\nCustomers can check data usage through the SmartConnect mobile app. Real-time usage is displayed on the home screen. Historical usage charts show daily and monthly trends. Alerts can be configured for usage thresholds.\n\n### Customer Portal\n\nThe web-based customer portal provides detailed usage information. Usage can be broken down by application type. Daily usage summaries are available. Usage alerts can be configured via email or SMS.\n\n### Usage Alerts\n\nAutomatic alerts are sent at 50%, 75%, 90%, and 100% of the data limit. Alerts are sent via SMS and push notification. Additional custom alerts can be configured. Alerts are free and do not count against data usage."
+  },
+  {
+    "chunk_id": "data-usage-throttling::s5",
+    "document_id": "data-usage-throttling",
+    "document_title": "Data Usage and Throttling Policies",
+    "section_heading": "Enterprise Plans",
+    "category": "billing",
+    "chunk_index": 5,
+    "content": "### Dedicated Bandwidth\n\nEnterprise plans include dedicated bandwidth with guaranteed minimum speeds. No throttling is applied to enterprise plans. Bandwidth is reserved for the customer's exclusive use. Upgrades and downgrades are managed through the account manager.\n\n### Burst Capacity\n\nEnterprise plans include burst capacity above the guaranteed bandwidth. Burst capacity is available during off-peak hours. Peak hours are defined as 8 AM to 8 PM local time. Burst capacity is not guaranteed and depends on network availability."
+  },
+  {
+    "chunk_id": "invoice-disputes::s0",
+    "document_id": "invoice-disputes",
+    "document_title": "Invoice Dispute Procedures",
+    "section_heading": "",
+    "category": "billing",
+    "chunk_index": 0,
+    "content": "# Invoice Dispute Procedures"
+  },
+  {
+    "chunk_id": "invoice-disputes::s1",
+    "document_id": "invoice-disputes",
+    "document_title": "Invoice Dispute Procedures",
+    "section_heading": "Overview",
+    "category": "billing",
+    "chunk_index": 1,
+    "content": "This document describes how SmartConnect handles disputes regarding invoice charges, billing errors, and service credits."
+  },
+  {
+    "chunk_id": "invoice-disputes::s2",
+    "document_id": "invoice-disputes",
+    "document_title": "Invoice Dispute Procedures",
+    "section_heading": "Types of Disputes",
+    "category": "billing",
+    "chunk_index": 2,
+    "content": "### Billing Error\n\nThe customer believes there is an error on their invoice. Examples include incorrect charges, missing credits, wrong plan pricing, or duplicate charges. Billing errors must be investigated and resolved within 30 days of the dispute.\n\n### Service Quality\n\nThe customer experienced service quality issues and requests a credit. Examples include dropped calls, slow data, or service outages. Service quality credits require verification of the reported issue.\n\n### Unauthorized Charges\n\nThe customer did not authorize or recognize a charge on their invoice. Examples include third-party charges, premium SMS, or subscription services. Unauthorized charges require investigation and may involve third-party coordination.\n\n### Contract Dispute\n\nThe customer disagrees with contract terms or early termination fees. Examples include device financing, promotional commitments, or service agreements. Contract disputes are reviewed by the customer relations team."
+  },
+  {
+    "chunk_id": "invoice-disputes::s3",
+    "document_id": "invoice-disputes",
+    "document_title": "Invoice Dispute Procedures",
+    "section_heading": "Dispute Resolution Process",
+    "category": "billing",
+    "chunk_index": 3,
+    "content": "### Step 1: Customer Contact\n\nThe customer contacts SmartConnect to initiate a dispute. The dispute can be initiated via phone, email, chat, or in-store visit. The customer provides their account number, invoice number, and description of the dispute. A dispute case number is generated and provided to the customer.\n\n### Step 2: Initial Review\n\nThe customer service representative reviews the dispute during the initial contact. If the dispute can be resolved immediately, the representative applies the appropriate credit or adjustment. If the dispute requires investigation, it is escalated to the billing investigation team.\n\n### Step 3: Investigation\n\nThe billing investigation team reviews all relevant information. This includes account history, usage records, service logs, and any supporting documentation provided by the customer. The investigation is completed within 10 business days for standard disputes and 30 business days for complex disputes.\n\n### Step 4: Resolution\n\nThe investigation team determines the appropriate resolution. If the dispute is valid, a credit or adjustment is applied to the customer's account. If the dispute is not valid, the customer is notified with an explanation. The customer may appeal the decision if they disagree with the outcome.\n\n### Step 5: Customer Notification\n\nThe customer is notified of the resolution via their preferred communication method. The notification includes a summary of the investigation, the determination, and any credits or adjustments applied. The customer's invoice is updated to reflect the resolution."
+  },
+  {
+    "chunk_id": "invoice-disputes::s4",
+    "document_id": "invoice-disputes",
+    "document_title": "Invoice Dispute Procedures",
+    "section_heading": "Credit Limits",
+    "category": "billing",
+    "chunk_index": 4,
+    "content": "### Automatic Credits\n\nCredits below $25 can be applied by customer service representatives without supervisor approval. Credits between $25 and $100 require supervisor approval. Credits above $100 require management approval. All credits are documented with a reason code.\n\n### Recurring Credits\n\nRecurring credits for ongoing issues are limited to 3 billing cycles. After 3 cycles, the issue must be escalated for permanent resolution. Recurring credits must be reviewed monthly to ensure they are still appropriate."
+  },
+  {
+    "chunk_id": "invoice-disputes::s5",
+    "document_id": "invoice-disputes",
+    "document_title": "Invoice Dispute Procedures",
+    "section_heading": "Time Limits",
+    "category": "billing",
+    "chunk_index": 5,
+    "content": "### Dispute Filing Deadline\n\nCustomers must file disputes within 60 days of the invoice date. Disputes filed after 60 days may not be eligible for credit. Exceptions are made for circumstances beyond the customer's control.\n\n### Resolution Deadline\n\nStandard disputes must be resolved within 30 business days. Complex disputes involving third parties may take up to 60 business days. Customers are notified of any delays and provided with an updated timeline.\n\n### Appeal Deadline\n\nCustomers must file appeals within 30 days of the initial resolution. Appeals are reviewed by a different team than the initial investigation. The appeal decision is final and binding."
+  },
+  {
+    "chunk_id": "payment-methods::s0",
+    "document_id": "payment-methods",
+    "document_title": "Payment Methods and Processing",
+    "section_heading": "",
+    "category": "billing",
+    "chunk_index": 0,
+    "content": "# Payment Methods and Processing"
+  },
+  {
+    "chunk_id": "payment-methods::s1",
+    "document_id": "payment-methods",
+    "document_title": "Payment Methods and Processing",
+    "section_heading": "Accepted Payment Methods",
+    "category": "billing",
+    "chunk_index": 1,
+    "content": "### Credit and Debit Cards\n\nVisa, MasterCard, American Express, and Discover are accepted. Cards must be valid and have sufficient funds. Recurring payments can be set up for automatic billing. A convenience fee may apply for certain card types.\n\n### Bank Account (ACH)\n\nDirect debit from a checking or savings account. ACH payments are free for customers. Processing takes 3-5 business days. The customer must provide routing and account numbers.\n\n### Digital Wallets\n\nApple Pay, Google Pay, and Samsung Pay are accepted for one-time payments. Digital wallet payments are processed immediately. No convenience fees apply. Digital wallets cannot be used for recurring payments.\n\n### In-Person Payments\n\nCash, check, and card payments are accepted at authorized payment locations. Payments are posted to the account within 1 business day. A receipt is provided for all in-person payments.\n\n### Mail-In Payments\n\nCheck or money order payments can be mailed to the payment processing center. Payments are posted when received and processed. Allow 7-10 business days for mail-in payments to be applied."
+  },
+  {
+    "chunk_id": "payment-methods::s2",
+    "document_id": "payment-methods",
+    "document_title": "Payment Methods and Processing",
+    "section_heading": "Payment Processing",
+    "category": "billing",
+    "chunk_index": 2,
+    "content": "### Payment Posting\n\nPayments are posted to the customer's account based on the payment method. Credit card and digital wallet payments post immediately. ACH payments post in 3-5 business days. Mail-in payments post within 2 business days of receipt.\n\n### Payment Application\n\nPayments are applied to the oldest outstanding balance first. If the customer has multiple invoices, the payment is applied to the earliest invoice. Partial payments are accepted and applied to the outstanding balance.\n\n### Payment Confirmation\n\nCustomers receive confirmation of their payment via their preferred communication method. Confirmation includes the amount paid, the payment method, and the updated account balance. Confirmation is sent within 1 business day of payment posting."
+  },
+  {
+    "chunk_id": "payment-methods::s3",
+    "document_id": "payment-methods",
+    "document_title": "Payment Methods and Processing",
+    "section_heading": "AutoPay",
+    "category": "billing",
+    "chunk_index": 3,
+    "content": "### Enrollment\n\nCustomers can enroll in AutoPay through the mobile app, customer portal, or by contacting customer service. AutoPay requires a valid payment method on file. The payment method is charged on the billing due date each month.\n\n### AutoPay Benefits\n\nCustomers enrolled in AutoPay receive a $5 per month discount on their service. The discount is applied automatically each month. The discount is lost if AutoPay is canceled or if a payment fails.\n\n### AutoPay Failure\n\nIf an AutoPay payment fails, the customer is notified immediately. The customer has 5 business days to make an alternative payment. If no payment is received within 5 business days, late fees may apply. AutoPay is not canceled after a single failure.\n\n### AutoPay Cancellation\n\nCustomers can cancel AutoPay at any time. Cancellation takes effect for the next billing cycle. The monthly discount is removed upon cancellation. Customers can re-enroll in AutoPay at any time."
+  },
+  {
+    "chunk_id": "payment-methods::s4",
+    "document_id": "payment-methods",
+    "document_title": "Payment Methods and Processing",
+    "section_heading": "Past Due Accounts",
+    "category": "billing",
+    "chunk_index": 4,
+    "content": "### Reminder Notices\n\nAutomated reminders are sent 7 days before the due date, on the due date, and 7 days after the due date. Reminders are sent via SMS and email. The reminders include the amount due and payment options.\n\n### Late Fees\n\nA late fee of 1.5% of the outstanding balance is charged if payment is not received by the due date. The late fee is capped at $25 per billing cycle. Late fees are waived for customers enrolled in AutoPay who experience a system error.\n\n### Service Suspension\n\nIf payment is not received within 30 days of the due date, service may be suspended. The customer is notified 7 days before suspension. To restore service, the customer must pay the outstanding balance plus any reconnection fees."
+  },
+  {
+    "chunk_id": "roaming-policies::s0",
+    "document_id": "roaming-policies",
+    "document_title": "Roaming Policies and Procedures",
+    "section_heading": "",
+    "category": "roaming",
+    "chunk_index": 0,
+    "content": "# Roaming Policies and Procedures"
+  },
+  {
+    "chunk_id": "roaming-policies::s1",
+    "document_id": "roaming-policies",
+    "document_title": "Roaming Policies and Procedures",
+    "section_heading": "Overview",
+    "category": "roaming",
+    "chunk_index": 1,
+    "content": "SmartConnect provides domestic and international roaming services to customers traveling outside their home coverage area. This document describes the policies, procedures, and troubleshooting for roaming services."
+  },
+  {
+    "chunk_id": "roaming-policies::s2",
+    "document_id": "roaming-policies",
+    "document_title": "Roaming Policies and Procedures",
+    "section_heading": "Domestic Roaming",
+    "category": "roaming",
+    "chunk_index": 2,
+    "content": "### What is Domestic Roaming\n\nDomestic roaming occurs when a SmartConnect customer connects to another carrier's network within the country. This happens when the customer is outside SmartConnect's coverage area but within a roaming partner's coverage area. Roaming is automatic and requires no customer action.\n\n### Domestic Roaming Charges\n\nDomestic roaming is included at no additional cost for all postpaid plans. Data usage while roaming counts toward the customer's plan data limit. Voice and SMS usage while roaming is included in the plan allowances. There are no separate roaming fees for domestic roaming.\n\n### Domestic Roaming Troubleshooting\n\nIf a customer cannot connect to a roaming network: verify roaming is enabled on the account, check that the customer is outside the SmartConnect coverage area, verify the device supports the roaming partner's frequency bands, and restart the device to force network reselection."
+  },
+  {
+    "chunk_id": "roaming-policies::s3",
+    "document_id": "roaming-policies",
+    "document_title": "Roaming Policies and Procedures",
+    "section_heading": "International Roaming",
+    "category": "roaming",
+    "chunk_index": 3,
+    "content": "### International Roaming Plans\n\nSmartConnect offers international roaming plans for customers traveling abroad. Plans are available in daily, weekly, and monthly options. Each plan includes a set amount of data, voice minutes, and SMS. Plans can be activated before departure or while abroad.\n\n### International Roaming Charges\n\nWithout an international roaming plan, pay-per-use rates apply. Pay-per-use data is charged at $2.00 per MB. Pay-per-use voice calls are charged at $2.00 per minute for outgoing calls. Incoming calls are charged at $0.50 per minute. SMS is charged at $0.10 per message.\n\n### International Roaming Activation\n\nCustomers must request international roaming activation before traveling. Activation can be done via the mobile app, customer portal, or by contacting customer service. A security deposit may be required for high-risk destinations. Activation takes effect within 24 hours."
+  },
+  {
+    "chunk_id": "roaming-policies::s4",
+    "document_id": "roaming-policies",
+    "document_title": "Roaming Policies and Procedures",
+    "section_heading": "Roaming Partner Management",
+    "category": "roaming",
+    "chunk_index": 4,
+    "content": "### Partner Selection\n\nThe device automatically selects the best available roaming partner based on signal strength and quality. SmartConnect maintains roaming agreements with major carriers in each country. The customer does not need to manually select a network.\n\n### Partner Coverage\n\nRoaming partner coverage may differ from the home network. The customer may experience different speeds and quality depending on the roaming partner. Coverage maps for roaming partners are available on the SmartConnect website."
+  },
+  {
+    "chunk_id": "roaming-policies::s5",
+    "document_id": "roaming-policies",
+    "document_title": "Roaming Policies and Procedures",
+    "section_heading": "Roaming Troubleshooting",
+    "category": "roaming",
+    "chunk_index": 5,
+    "content": "### No Service While Roaming\n\nVerify roaming is enabled on the account. Check that the device has data roaming enabled in settings. Restart the device to force network reselection. If no service persists, manually select a network operator. Contact support if the issue continues.\n\n### Slow Data While Roaming\n\nRoaming speeds may be slower than the home network. This is normal and depends on the roaming partner's network. Try moving to a different location for better signal. Disable background data usage to conserve roaming data. Consider activating an international roaming plan for better speeds.\n\n### High Roaming Charges\n\nIf a customer receives unexpected roaming charges: review the customer's roaming usage, check if roaming plans were activated, verify if the usage was domestic or international, and apply credits if appropriate per the billing dispute policy."
+  },
+  {
+    "chunk_id": "international-roaming-troubleshooting::s0",
+    "document_id": "international-roaming-troubleshooting",
+    "document_title": "International Roaming Troubleshooting Guide",
+    "section_heading": "",
+    "category": "roaming",
+    "chunk_index": 0,
+    "content": "# International Roaming Troubleshooting Guide"
+  },
+  {
+    "chunk_id": "international-roaming-troubleshooting::s1",
+    "document_id": "international-roaming-troubleshooting",
+    "document_title": "International Roaming Troubleshooting Guide",
+    "section_heading": "Pre-Travel Checklist",
+    "category": "roaming",
+    "chunk_index": 1,
+    "content": "### Verify Account Status\n\nConfirm the customer's account is in good standing with no past due balance. Verify the line is active and not suspended. Confirm the customer has an active international roaming plan or understands pay-per-use rates.\n\n### Device Preparation\n\nEnsure the device is unlocked if it was purchased with a carrier lock. Verify the device supports the frequency bands used in the destination country. Update device software to the latest version. Back up important data before traveling.\n\n### Settings Configuration\n\nEnable data roaming in device settings. Verify APN settings are correct for international use. Enable Wi-Fi calling as a backup option. Set up the SmartConnect mobile app for account management while abroad."
+  },
+  {
+    "chunk_id": "international-roaming-troubleshooting::s2",
+    "document_id": "international-roaming-troubleshooting",
+    "document_title": "International Roaming Troubleshooting Guide",
+    "section_heading": "Common Issues and Solutions",
+    "category": "roaming",
+    "chunk_index": 2,
+    "content": "### Device Cannot Find Network\n\nIf the device cannot find any network in the destination country: verify the device is not in airplane mode, check that data roaming is enabled in device settings, restart the device and wait 5 minutes for network search, manually select a network operator in device settings, and verify the destination country is covered by SmartConnect roaming partners.\n\n### Network Registered but No Service\n\nIf the device shows a network name but cannot make calls or use data: verify roaming is enabled on the SmartConnect account, check that the international roaming plan is activated, verify the device APN settings are correct, try toggling airplane mode on and off, and contact SmartConnect support for account verification.\n\n### Data Not Working\n\nIf data does not work while roaming: verify mobile data is enabled in device settings, confirm data roaming is turned on, check that the roaming plan includes data, verify APN settings are configured for international use, try connecting to Wi-Fi and using the SmartConnect app to troubleshoot, and restart the device after making any setting changes.\n\n### MMS Not Working\n\nMMS may not be available in all roaming destinations. Verify the destination country supports MMS roaming. Check that mobile data is working. Verify MMS APN settings are correct. Some roaming partners do not support MMS, which is a known limitation.\n\n### Unexpected Charges\n\nIf a customer receives unexpected charges: review the detailed usage in the SmartConnect app or portal, verify the roaming plan was activated before travel, check if the usage was domestic or international roaming, review the per-use rates for the destination country, and initiate a billing dispute if the charges are incorrect."
+  },
+  {
+    "chunk_id": "international-roaming-troubleshooting::s3",
+    "document_id": "international-roaming-troubleshooting",
+    "document_title": "International Roaming Troubleshooting Guide",
+    "section_heading": "Advanced Troubleshooting",
+    "category": "roaming",
+    "chunk_index": 3,
+    "content": "### SIM Card Issues While Abroad\n\nIf the SIM card is not recognized: remove and reinsert the SIM card, try the SIM in a different device if available, check for physical damage to the SIM card, contact SmartConnect for SIM replacement options while abroad.\n\n### Device Compatibility Issues\n\nIf the device does not work on roaming networks: verify the device supports the required frequency bands, check if the device is carrier-locked, confirm the device software is up to date, try a different device if available."
+  },
+  {
+    "chunk_id": "international-roaming-troubleshooting::s4",
+    "document_id": "international-roaming-troubleshooting",
+    "document_title": "International Roaming Troubleshooting Guide",
+    "section_heading": "Emergency Roaming",
+    "category": "roaming",
+    "chunk_index": 4,
+    "content": "### Emergency Calls\n\nEmergency calls (911, 112, 999) can be made even without roaming activation. The device will connect to any available network for emergency calls. Emergency calls may be routed to the nearest emergency center regardless of the network used.\n\n### Emergency Contacts\n\nIf a customer needs emergency assistance while abroad: they can call SmartConnect customer service from any phone, they can visit a SmartConnect partner store in the destination country, they can use the SmartConnect app over Wi-Fi for support, and the emergency support line is available 24/7."
+  },
+  {
+    "chunk_id": "device-compatibility::s0",
+    "document_id": "device-compatibility",
+    "document_title": "Device Compatibility Guide",
+    "section_heading": "",
+    "category": "device",
+    "chunk_index": 0,
+    "content": "# Device Compatibility Guide"
+  },
+  {
+    "chunk_id": "device-compatibility::s1",
+    "document_id": "device-compatibility",
+    "document_title": "Device Compatibility Guide",
+    "section_heading": "Network Band Requirements",
+    "category": "device",
+    "chunk_index": 1,
+    "content": "### LTE Bands\n\nSmartConnect uses the following LTE bands. Devices must support at least one band for basic service. Devices supporting multiple bands will have better coverage and performance. Required bands for full LTE experience: Band 2 (1900 MHz), Band 4 (1700/2100 MHz), Band 12 (700 MHz), and Band 66 (1700/2100 MHz).\n\n### 5G Bands\n\nFor 5G NR service, devices must support 5G NR bands. Supported 5G bands include: n41 (2500 MHz) for mid-band 5G, n71 (600 MHz) for low-band 5G, and n260 (39 GHz) for mmWave 5G. 5G service requires a 5G-capable device and 5G plan.\n\n### VoLTE Requirements\n\nFor voice service, devices must support Voice over LTE (VoLTE). All smartphones sold by SmartConnect are VoLTE capable. BYOD devices must be VoLTE compatible. Devices without VoLTE will not be able to make or receive calls on the SmartConnect network."
+  },
+  {
+    "chunk_id": "device-compatibility::s2",
+    "document_id": "device-compatibility",
+    "document_title": "Device Compatibility Guide",
+    "section_heading": "BYOD (Bring Your Own Device) Compatibility",
+    "category": "device",
+    "chunk_index": 2,
+    "content": "### Compatibility Checker\n\nCustomers can check device compatibility on the SmartConnect website. The checker uses the device IMEI to verify band support. Customers should check compatibility before purchasing a device for use on SmartConnect.\n\n### IMEI Requirements\n\nThe device IMEI must not be blacklisted. The IMEI must be registered with the GSMA database. Devices reported as lost or stolen will not be activated. Customers can check IMEI status on the SmartConnect website.\n\n### Device Unlocking\n\nDevices purchased from other carriers may need to be unlocked. SmartConnect will unlock devices that are fully paid off and not reported as lost or stolen. The unlocking process takes 2-5 business days. Customers can request unlocking through customer service."
+  },
+  {
+    "chunk_id": "device-compatibility::s3",
+    "document_id": "device-compatibility",
+    "document_title": "Device Compatibility Guide",
+    "section_heading": "Device Setup",
+    "category": "device",
+    "chunk_index": 3,
+    "content": "### New Device Setup\n\nWhen setting up a new device on SmartConnect: insert the SIM card or activate eSIM, follow the device setup wizard, connect to Wi-Fi for initial updates, configure APN settings if data does not work, and test voice, data, and messaging.\n\n### eSIM Setup\n\nFor devices with eSIM support: scan the QR code provided by SmartConnect, follow the on-screen prompts to activate the eSIM, verify the eSIM is active in device settings, and remove the physical SIM if replacing.\n\n### Data Transfer\n\nWhen transferring from an old device to a new device: back up data from the old device, restore data on the new device, verify all apps and data transferred correctly, and test all services on the new device."
+  },
+  {
+    "chunk_id": "device-compatibility::s4",
+    "document_id": "device-compatibility",
+    "document_title": "Device Compatibility Guide",
+    "section_heading": "Known Device Issues",
+    "category": "device",
+    "chunk_index": 4,
+    "content": "### iPhone Issues\n\nSome older iPhone models may have VoLTE compatibility issues. Ensure the device is running the latest iOS version. If VoLTE does not work, try toggling VoLTE off and on in Settings > Cellular > Cellular Data Options > Voice & Data.\n\n### Android Issues\n\nSome Android devices may require manual APN configuration. If data does not work, verify APN settings match the SmartConnect defaults. Some Samsung devices have a separate APN for T-Mobile roaming, which may conflict with SmartConnect settings.\n\n### Pixel Issues\n\nGoogle Pixel devices generally work well with SmartConnect. Ensure the device is running the latest Android version. If VoWiFi does not work, check that the device software is up to date."
+  },
+  {
+    "chunk_id": "device-compatibility::s5",
+    "document_id": "device-compatibility",
+    "document_title": "Device Compatibility Guide",
+    "section_heading": "Device Care",
+    "category": "device",
+    "chunk_index": 5,
+    "content": "### Battery Health\n\nSmartConnect recommends keeping device battery above 20% for optimal performance. Extreme temperatures can affect battery life. Avoid charging the device in direct sunlight or extreme cold.\n\n### Software Updates\n\nKeep device software up to date for best performance and security. Software updates may include carrier settings updates that improve network performance. SmartConnect recommends enabling automatic software updates."
+  },
+  {
+    "chunk_id": "sim-card-management::s0",
+    "document_id": "sim-card-management",
+    "document_title": "SIM Card Management Guide",
+    "section_heading": "",
+    "category": "device",
+    "chunk_index": 0,
+    "content": "# SIM Card Management Guide"
+  },
+  {
+    "chunk_id": "sim-card-management::s1",
+    "document_id": "sim-card-management",
+    "document_title": "SIM Card Management Guide",
+    "section_heading": "SIM Card Types",
+    "category": "device",
+    "chunk_index": 1,
+    "content": "### Physical SIM (nano-SIM)\n\nStandard nano-SIM card for most smartphones. Provides voice, data, and messaging service. The SIM card is tied to the customer's account and phone number. Physical SIMs can be swapped between compatible devices.\n\n### eSIM (embedded SIM)\n\nSoftware-based SIM built into newer devices. No physical card required. Can be activated remotely by scanning a QR code. Supports multiple lines on a single device. eSIMs are more secure and cannot be physically removed.\n\n### Micro-SIM and Standard SIM\n\nOlder SIM card formats that are no longer supported by current SmartConnect plans. Customers with these SIMs should upgrade to a nano-SIM or eSIM. SmartConnect provides free SIM upgrades upon request."
+  },
+  {
+    "chunk_id": "sim-card-management::s2",
+    "document_id": "sim-card-management",
+    "document_title": "SIM Card Management Guide",
+    "section_heading": "SIM Card Provisioning",
+    "category": "device",
+    "chunk_index": 2,
+    "content": "### New Line Activation\n\nA new SIM card is generated and assigned to the customer's account. The SIM is provisioned with the customer's phone number, plan, and service features. The SIM is shipped to the customer or provided at a retail location. Activation occurs when the SIM is inserted into a compatible device.\n\n### Replacement SIM\n\nIf a SIM card is lost, damaged, or malfunctioning, a replacement can be issued. The replacement SIM is assigned the same phone number and plan. The old SIM is deactivated immediately upon replacement. The customer must verify their identity before a replacement is issued.\n\n### SIM Swap\n\nA SIM swap transfers the customer's phone number and plan to a new SIM. This is different from a replacement, as it may involve a different SIM type. SIM swaps require identity verification. The old SIM is deactivated immediately."
+  },
+  {
+    "chunk_id": "sim-card-management::s3",
+    "document_id": "sim-card-management",
+    "document_title": "SIM Card Management Guide",
+    "section_heading": "SIM Card Troubleshooting",
+    "category": "device",
+    "chunk_index": 3,
+    "content": "### SIM Not Recognized\n\nIf the device does not recognize the SIM card: remove and reinsert the SIM card, clean the SIM card contacts with a soft cloth, try the SIM in a different device, check for physical damage to the SIM card, and contact SmartConnect for a replacement if the SIM is damaged.\n\n### SIM Locked (PUK Code)\n\nIf the SIM is locked due to incorrect PIN entry: the PUK code is printed on the SIM card packaging, enter the PUK code when prompted on the device, set a new PIN after unlocking, and if the PUK code is lost, contact SmartConnect for assistance.\n\n### SIM Not Activated\n\nIf a new or replacement SIM is not activating: verify the SIM has been provisioned in the SmartConnect system, insert the SIM into a compatible device and connect to Wi-Fi, wait 15 minutes for activation to complete, and contact SmartConnect if activation fails after 30 minutes."
+  },
+  {
+    "chunk_id": "sim-card-management::s4",
+    "document_id": "sim-card-management",
+    "document_title": "SIM Card Management Guide",
+    "section_heading": "SIM Security",
+    "category": "device",
+    "chunk_index": 4,
+    "content": "### SIM Cloning Protection\n\nSmartConnect uses advanced encryption to prevent SIM cloning. If a SIM is suspected to be cloned, contact SmartConnect immediately. The compromised SIM will be deactivated and a replacement issued.\n\n### SIM Lock\n\nSIM lock prevents the use of a stolen SIM card. If a device is reported lost or stolen, the SIM is automatically locked. The customer must contact SmartConnect to unlock or replace the SIM. A locked SIM cannot make calls, send texts, or use data.\n\n### PUK Code Security\n\nThe PUK code should be kept in a safe place. If the PUK code is entered incorrectly 10 times, the SIM is permanently locked. A permanently locked SIM requires replacement. The PUK code cannot be reset by the customer."
+  },
+  {
+    "chunk_id": "device-financing::s0",
+    "document_id": "device-financing",
+    "document_title": "Device Financing Program",
+    "section_heading": "",
+    "category": "device",
+    "chunk_index": 0,
+    "content": "# Device Financing Program"
+  },
+  {
+    "chunk_id": "device-financing::s1",
+    "document_id": "device-financing",
+    "document_title": "Device Financing Program",
+    "section_heading": "Overview",
+    "category": "device",
+    "chunk_index": 1,
+    "content": "SmartConnect offers device financing to allow customers to purchase new devices with monthly installments instead of paying the full retail price upfront."
+  },
+  {
+    "chunk_id": "device-financing::s2",
+    "document_id": "device-financing",
+    "document_title": "Device Financing Program",
+    "section_heading": "Financing Terms",
+    "category": "device",
+    "chunk_index": 2,
+    "content": "### Payment Structure\n\nThe device cost is divided into equal monthly installments over 24 or 36 months. The installment amount is based on the device retail price and the financing term. There is no interest charged on the financing. The total cost equals the retail price of the device.\n\n### Eligibility\n\nCustomers must have an active SmartConnect account in good standing. The account must not have any past due balance. The customer must pass a credit check for financing amounts above $500. New customers may be required to make a down payment.\n\n### Credit Check\n\nA soft credit check is performed for financing amounts up to $500. A hard credit check is performed for financing amounts above $500. The credit check does not affect the customer's credit score for soft checks. Customers who do not qualify for financing may pay the full retail price or make a down payment."
+  },
+  {
+    "chunk_id": "device-financing::s3",
+    "document_id": "device-financing",
+    "document_title": "Device Financing Program",
+    "section_heading": "Financing Agreement",
+    "category": "device",
+    "chunk_index": 3,
+    "content": "### Terms and Conditions\n\nThe financing agreement is a separate contract from the service agreement. The agreement specifies the device model, retail price, installment amount, financing term, and payment due date. The agreement also specifies early termination and default provisions.\n\n### Monthly Charges\n\nThe device installment is added to the customer's monthly service bill. The installment is a separate line item from the service charges. The installment is due on the same date as the service charges. Late payments on the installment follow the same late payment policy as service charges.\n\n### Ownership\n\nThe customer does not own the device until all installments are paid. SmartConnect retains ownership of the device until the financing is complete. The customer is responsible for the device's care and condition. The device may not be sold or transferred while under financing."
+  },
+  {
+    "chunk_id": "device-financing::s4",
+    "document_id": "device-financing",
+    "document_title": "Device Financing Program",
+    "section_heading": "Early Payoff",
+    "category": "device",
+    "chunk_index": 4,
+    "content": "### Full Payoff\n\nCustomers can pay off the remaining balance at any time. The payoff amount is the total of all remaining installments. No additional fees or penalties apply for early payoff. After payoff, the customer owns the device outright.\n\n### Partial Payoff\n\nCustomers can make additional payments toward the device balance at any time. Additional payments are applied to the remaining balance. The monthly installment amount does not change with additional payments. The number of remaining installments is reduced."
+  },
+  {
+    "chunk_id": "device-financing::s5",
+    "document_id": "device-financing",
+    "document_title": "Device Financing Program",
+    "section_heading": "Device Return and Exchange",
+    "category": "device",
+    "chunk_index": 5,
+    "content": "### Return Policy\n\nCustomers can return a financed device within 14 days of purchase. The device must be in good condition with no damage. The customer receives a refund of all installments paid minus any usage charges. The financing agreement is canceled upon return.\n\n### Device Exchange\n\nCustomers can exchange a financed device for a different model within 30 days. The original device must be returned in good condition. The financing is transferred to the new device. Any price difference is adjusted in the monthly installment.\n\n### Trade-In Program\n\nCustomers with a financed device can trade in for a new device. The trade-in value is applied to the new device purchase. The remaining balance on the old device is paid off from the trade-in value. Any remaining balance on the old device is added to the new financing."
+  },
+  {
+    "chunk_id": "device-financing::s6",
+    "document_id": "device-financing",
+    "document_title": "Device Financing Program",
+    "section_heading": "Default and Collections",
+    "category": "device",
+    "chunk_index": 6,
+    "content": "### Default\n\nA financing agreement is in default if: the customer's service is suspended for non-payment, the customer fails to make payments for 60 days, or the customer breaches the financing agreement terms. Default triggers the remaining balance becoming immediately due.\n\n### Collections\n\nIf the financing balance remains unpaid after default, the account may be sent to collections. The customer is notified before the account is sent to collections. Collections activity may affect the customer's credit score. The customer can contact SmartConnect to arrange payment before the account is sent to collections."
+  },
+  {
+    "chunk_id": "device-financing::s7",
+    "document_id": "device-financing",
+    "document_title": "Device Financing Program",
+    "section_heading": "Device Insurance",
+    "category": "device",
+    "chunk_index": 7,
+    "content": "### Optional Coverage\n\nSmartConnect offers optional device insurance through a third-party provider. The insurance covers accidental damage, theft, and mechanical failure after the manufacturer warranty expires. The insurance premium is added to the monthly bill. Claims are processed through the third-party provider.\n\n### Insurance Claims\n\nCustomers can file insurance claims through the SmartConnect app or website. A deductible applies for each claim. Approved claims result in a replacement device being shipped to the customer. Unauthorized repairs may void the insurance coverage."
+  },
+  {
+    "chunk_id": "customer-service-standards::s0",
+    "document_id": "customer-service-standards",
+    "document_title": "Customer Service Standards",
+    "section_heading": "",
+    "category": "support",
+    "chunk_index": 0,
+    "content": "# Customer Service Standards"
+  },
+  {
+    "chunk_id": "customer-service-standards::s1",
+    "document_id": "customer-service-standards",
+    "document_title": "Customer Service Standards",
+    "section_heading": "Overview",
+    "category": "support",
+    "chunk_index": 1,
+    "content": "This document defines the service standards and response time requirements for SmartConnect customer support operations."
+  },
+  {
+    "chunk_id": "customer-service-standards::s2",
+    "document_id": "customer-service-standards",
+    "document_title": "Customer Service Standards",
+    "section_heading": "Response Time Requirements",
+    "category": "support",
+    "chunk_index": 2,
+    "content": "### Phone Support\n\nInitial connection to a representative: within 2 minutes during business hours, within 5 minutes during off-hours. Average handle time: 8-12 minutes for standard inquiries, 15-25 minutes for complex issues. Customer satisfaction target: 90% or higher.\n\n### Chat Support\n\nInitial response: within 30 seconds. Average resolution time: 10-15 minutes for standard inquiries. Chat support is available 24/7. Customer satisfaction target: 85% or higher.\n\n### Email Support\n\nInitial acknowledgment: within 4 hours during business days. Resolution: within 24 hours for standard inquiries, within 48 hours for complex issues. Email support is available for non-urgent issues. Customer satisfaction target: 80% or higher.\n\n### Social Media Support\n\nInitial response: within 2 hours during business hours. Resolution: within 24 hours for standard inquiries. Social media support is available for public inquiries. Customer satisfaction target: 85% or higher."
+  },
+  {
+    "chunk_id": "customer-service-standards::s3",
+    "document_id": "customer-service-standards",
+    "document_title": "Customer Service Standards",
+    "section_heading": "Service Level Agreements (SLAs)",
+    "category": "support",
+    "chunk_index": 3,
+    "content": "### Customer Response SLA\n\nAll customer inquiries must receive an initial response within the specified timeframe. The initial response must include a case number and estimated resolution time. If resolution is delayed, the customer must be updated within the originally estimated timeframe.\n\n### Resolution SLA\n\nStandard inquiries must be resolved within 24 hours. Complex issues must be resolved within 48 hours. Issues requiring network investigation must be resolved within 72 hours. Issues requiring vendor coordination must be resolved within 5 business days.\n\n### Escalation SLA\n\nIf an issue cannot be resolved by the first representative, it must be escalated within 15 minutes. The escalation must include all relevant information gathered during the initial contact. The customer must be notified of the escalation and provided with the new case owner."
+  },
+  {
+    "chunk_id": "customer-service-standards::s4",
+    "document_id": "customer-service-standards",
+    "document_title": "Customer Service Standards",
+    "section_heading": "Quality Standards",
+    "category": "support",
+    "chunk_index": 4,
+    "content": "### First Contact Resolution\n\nThe target first contact resolution rate is 75%. First contact resolution means the issue is fully resolved during the initial interaction without requiring follow-up. Issues requiring investigation or escalation are not counted against first contact resolution.\n\n### Customer Satisfaction\n\nThe target customer satisfaction score is 4.2 out of 5.0. Satisfaction is measured through post-interaction surveys. Surveys are sent via SMS and email. Low satisfaction scores trigger a quality review.\n\n### Accuracy\n\nAll information provided to customers must be accurate and complete. Representatives must verify information before providing it to customers. Incorrect information must be corrected immediately. Accuracy is measured through quality audits."
+  },
+  {
+    "chunk_id": "customer-service-standards::s5",
+    "document_id": "customer-service-standards",
+    "document_title": "Customer Service Standards",
+    "section_heading": "Communication Standards",
+    "category": "support",
+    "chunk_index": 5,
+    "content": "### Professional Tone\n\nRepresentatives must maintain a professional and courteous tone at all times. Customers must be addressed by their preferred name. Technical jargon must be avoided when explaining issues to customers. All communication must be clear and concise.\n\n### Active Listening\n\nRepresentatives must listen to the customer's full description of the issue before responding. Clarifying questions should be asked to ensure understanding. The representative must summarize the issue back to the customer for confirmation.\n\n### Follow-Through\n\nAll promises made to customers must be fulfilled. If a callback is promised, it must be made within the specified timeframe. If information is promised, it must be provided within the specified timeframe. Failure to follow through must be documented and addressed."
+  },
+  {
+    "chunk_id": "customer-service-standards::s6",
+    "document_id": "customer-service-standards",
+    "document_title": "Customer Service Standards",
+    "section_heading": "Training Requirements",
+    "category": "support",
+    "chunk_index": 6,
+    "content": "### New Hire Training\n\nAll new representatives complete a 4-week training program. Training covers product knowledge, systems training, communication skills, and de-escalation techniques. Representatives must pass a certification exam before handling live interactions.\n\n### Ongoing Training\n\nRepresentatives complete 8 hours of training per quarter. Training covers new products, policy updates, and skill development. Training completion is tracked and reported. Failure to complete required training may result in performance action."
+  },
+  {
+    "chunk_id": "ticket-management::s0",
+    "document_id": "ticket-management",
+    "document_title": "Ticket Management Procedures",
+    "section_heading": "",
+    "category": "support",
+    "chunk_index": 0,
+    "content": "# Ticket Management Procedures"
+  },
+  {
+    "chunk_id": "ticket-management::s1",
+    "document_id": "ticket-management",
+    "document_title": "Ticket Management Procedures",
+    "section_heading": "Ticket Lifecycle",
+    "category": "support",
+    "chunk_index": 1,
+    "content": "### Creation\n\nTickets are created when a customer contacts SmartConnect with an issue. Tickets can be created via phone, chat, email, or self-service. Each ticket is assigned a unique ticket number. The ticket includes the customer's information, issue description, and initial assessment.\n\n### Assignment\n\nTickets are automatically assigned to the appropriate team based on category and priority. If a specific agent is available, the ticket is assigned to that agent. If no agent is available, the ticket enters the queue for the next available agent. Customers can request a specific agent for follow-up.\n\n### Investigation\n\nThe assigned agent investigates the issue. This may involve reviewing account information, checking network status, running diagnostics, or consulting knowledge base articles. The agent documents all findings in the ticket. If the issue requires additional expertise, the ticket is escalated.\n\n### Resolution\n\nOnce the issue is resolved, the agent documents the resolution in the ticket. The customer is notified of the resolution. The customer confirms the issue is resolved. If the customer does not confirm within 48 hours, the ticket is automatically closed with a note that the customer did not confirm.\n\n### Closure\n\nTickets are closed after the customer confirms resolution or after 48 hours without customer response. Closed tickets are archived for future reference. Customers can reopen a closed ticket within 30 days if the issue recurs."
+  },
+  {
+    "chunk_id": "ticket-management::s2",
+    "document_id": "ticket-management",
+    "document_title": "Ticket Management Procedures",
+    "section_heading": "Ticket Priority",
+    "category": "support",
+    "chunk_index": 2,
+    "content": "### Critical (P1)\n\nService completely unavailable. Affects business operations. No workaround available. Requires immediate attention. Response within 15 minutes. Resolution within 4 hours.\n\n### High (P2)\n\nService significantly degraded. Major feature unavailable. Workaround may be available. Requires urgent attention. Response within 30 minutes. Resolution within 8 hours.\n\n### Medium (P3)\n\nService partially affected. Minor feature unavailable. Workaround available. Requires attention. Response within 2 hours. Resolution within 24 hours.\n\n### Low (P4)\n\nCosmetic issue. Enhancement request. Informational inquiry. Requires response. Response within 8 hours. Resolution within 72 hours."
+  },
+  {
+    "chunk_id": "ticket-management::s3",
+    "document_id": "ticket-management",
+    "document_title": "Ticket Management Procedures",
+    "section_heading": "Ticket Categories",
+    "category": "support",
+    "chunk_index": 3,
+    "content": "### Technical Support\n\nIssues related to service functionality. Includes connectivity problems, device issues, and network problems. Assigned to the technical support team.\n\n### Billing Support\n\nIssues related to charges, payments, and account balance. Includes disputes, payment processing, and plan changes. Assigned to the billing support team.\n\n### Account Management\n\nIssues related to account setup, changes, and inquiries. Includes activation, cancellation, and account updates. Assigned to the account management team.\n\n### Sales\n\nNew service inquiries, plan recommendations, and device purchases. Assigned to the sales team."
+  },
+  {
+    "chunk_id": "ticket-management::s4",
+    "document_id": "ticket-management",
+    "document_title": "Ticket Management Procedures",
+    "section_heading": "Ticket Communication",
+    "category": "support",
+    "chunk_index": 4,
+    "content": "### Customer Updates\n\nCustomers are notified of ticket status changes via their preferred communication method. Updates include assignment, investigation progress, escalation, and resolution. Customers can request updates at any time by contacting support.\n\n### Internal Notes\n\nAgents add internal notes to document investigation findings and actions taken. Internal notes are not visible to the customer. Notes are used for continuity when tickets are escalated or reassigned.\n\n### Resolution Documentation\n\nThe resolution must be documented clearly in the ticket. Include the root cause, steps taken to resolve, and any preventive measures. Documentation is used for knowledge base updates and training."
+  },
+  {
+    "chunk_id": "account-security::s0",
+    "document_id": "account-security",
+    "document_title": "Account Security Procedures",
+    "section_heading": "",
+    "category": "support",
+    "chunk_index": 0,
+    "content": "# Account Security Procedures"
+  },
+  {
+    "chunk_id": "account-security::s1",
+    "document_id": "account-security",
+    "document_title": "Account Security Procedures",
+    "section_heading": "Identity Verification",
+    "category": "support",
+    "chunk_index": 1,
+    "content": "### Verification Methods\n\nCustomer identity must be verified before any account changes. Verification methods include: account PIN, last four digits of SSN, security question answers, email verification, and SMS verification code. Multiple methods may be required for high-risk changes.\n\n### High-Risk Changes\n\nThe following changes require enhanced verification: account PIN change, authorized user addition or removal, plan change, device upgrade, port-out request, and account closure. Enhanced verification requires two or more verification methods.\n\n### Verification Failure\n\nIf identity verification fails, the request is denied. The customer is advised to contact SmartConnect through an alternative channel. Account lockout occurs after 3 failed verification attempts. The customer must visit a retail location with photo ID to unlock."
+  },
+  {
+    "chunk_id": "account-security::s2",
+    "document_id": "account-security",
+    "document_title": "Account Security Procedures",
+    "section_heading": "Account PIN",
+    "category": "support",
+    "chunk_index": 2,
+    "content": "### PIN Requirements\n\nThe account PIN is a 4-6 digit numeric code. The PIN is required for account changes and support interactions. The PIN should not be easily guessable. The PIN should be different from the device unlock PIN.\n\n### PIN Management\n\nCustomers set their PIN during account creation. The PIN can be changed through the customer portal, mobile app, or by contacting customer service. The PIN is not visible to SmartConnect employees. The PIN is stored securely and cannot be recovered, only reset.\n\n### PIN Reset\n\nIf a customer forgets their PIN, they can reset it through the customer portal using email or SMS verification. If the customer cannot access the portal, they must visit a retail location with photo ID. A temporary PIN is generated and must be changed on first use."
+  },
+  {
+    "chunk_id": "account-security::s3",
+    "document_id": "account-security",
+    "document_title": "Account Security Procedures",
+    "section_heading": "Account Takeover Prevention",
+    "category": "support",
+    "chunk_index": 3,
+    "content": "### Suspicious Activity Detection\n\nSmartConnect monitors accounts for suspicious activity. Indicators include: unusual login locations, rapid account changes, multiple failed verification attempts, and unusual usage patterns. Suspicious activity triggers account security alerts.\n\n### Account Lock\n\nIf suspicious activity is detected, the account may be temporarily locked. The customer is notified via all registered contact methods. The customer must verify their identity to unlock the account. For high-risk situations, the customer must visit a retail location.\n\n### Recovery\n\nIf an account is compromised, SmartConnect works with the customer to secure the account. This may include: resetting all passwords and PINs, reviewing recent account changes, reverting unauthorized changes, and enabling additional security features. The customer is monitored for 30 days after recovery."
+  },
+  {
+    "chunk_id": "account-security::s4",
+    "document_id": "account-security",
+    "document_title": "Account Security Procedures",
+    "section_heading": "Device Security",
+    "category": "support",
+    "chunk_index": 4,
+    "content": "### Device Lock\n\nCustomers should enable device lock with a PIN, password, or biometric authentication. Device lock prevents unauthorized access if the device is lost or stolen. SmartConnect recommends using at least a 6-digit PIN or alphanumeric password.\n\n### Remote Lock and Wipe\n\nIf a device is lost or stolen, the customer can remotely lock or wipe the device. Remote lock and wipe are available through the customer portal or mobile app. Remote wipe erases all data on the device. The device cannot be used after a remote wipe without the account credentials.\n\n### Find My Device\n\nSmartConnect supports the Find My Device feature for compatible devices. Find My Device allows the customer to locate, lock, or wipe the device remotely. The feature requires the device to be powered on and connected to a network. Find My Device is available through the customer portal and mobile app."
+  },
+  {
+    "chunk_id": "account-security::s5",
+    "document_id": "account-security",
+    "document_title": "Account Security Procedures",
+    "section_heading": "Data Privacy",
+    "category": "support",
+    "chunk_index": 5,
+    "content": "### Customer Data Protection\n\nSmartConnect protects customer data in accordance with applicable privacy laws. Customer data is encrypted in transit and at rest. Access to customer data is logged and monitored. Customer data is not shared with third parties without customer consent.\n\n### Data Retention\n\nCustomer data is retained for the duration of the service relationship. Account data is retained for 7 years after account closure. Call recordings are retained for 90 days. Support ticket records are retained for 5 years.\n\n### Data Access Requests\n\nCustomers can request access to their personal data through the customer portal. Data access requests are processed within 30 days. Customers can also request deletion of their personal data, subject to legal retention requirements."
+  },
+  {
+    "chunk_id": "technical-troubleshooting::s0",
+    "document_id": "technical-troubleshooting",
+    "document_title": "Technical Troubleshooting Guide",
+    "section_heading": "",
+    "category": "support",
+    "chunk_index": 0,
+    "content": "# Technical Troubleshooting Guide"
+  },
+  {
+    "chunk_id": "technical-troubleshooting::s1",
+    "document_id": "technical-troubleshooting",
+    "document_title": "Technical Troubleshooting Guide",
+    "section_heading": "Voice Call Issues",
+    "category": "support",
+    "chunk_index": 1,
+    "content": "### Dropped Calls\n\nIf a customer reports dropped calls: check the customer's coverage area and signal strength, verify the serving cell site is operational, check for active network events in the area, review the customer's device and SIM status, and if the issue persists, escalate to network engineering with call logs and location data.\n\n### One-Way Audio\n\nIf a customer reports hearing the other party but not being heard (or vice versa): verify both parties have active voice service, check for VoLTE registration issues, review the customer's APN settings, test with a different device if available, and if the issue persists, escalate with the call details and timestamps.\n\n### Cannot Make Calls\n\nIf a customer cannot make calls: verify the line is active and not suspended, check for sufficient account balance or plan inclusions, verify the device has cellular service, check if VoLTE is enabled on the device, and test with a different device if available.\n\n### Cannot Receive Calls\n\nIf a customer cannot receive calls: verify the line is active, check for call forwarding settings, verify the device is not in airplane mode, check for do-not-disturb settings, and verify the customer's number is correctly provisioned."
+  },
+  {
+    "chunk_id": "technical-troubleshooting::s2",
+    "document_id": "technical-troubleshooting",
+    "document_title": "Technical Troubleshooting Guide",
+    "section_heading": "Data Issues",
+    "category": "support",
+    "chunk_index": 2,
+    "content": "### No Data Connection\n\nIf a customer has no data: verify mobile data is enabled in device settings, check that data is included in the customer's plan, verify APN settings are correct, check for data throttling due to plan limits, and run a speed test to confirm the issue.\n\n### Slow Data\n\nIf a customer reports slow data: check the customer's signal strength and quality, verify the serving site is not congested, check for background app data usage, verify no VPN is active, and test at different times to rule out congestion.\n\n### Intermittent Data\n\nIf a customer reports intermittent data: check for frequent handovers between cells, review signal quality variations, check for device power-saving settings that may affect connectivity, and verify the device software is up to date."
+  },
+  {
+    "chunk_id": "technical-troubleshooting::s3",
+    "document_id": "technical-troubleshooting",
+    "document_title": "Technical Troubleshooting Guide",
+    "section_heading": "Messaging Issues",
+    "category": "support",
+    "chunk_index": 3,
+    "content": "### SMS Not Sending\n\nIf a customer cannot send SMS: verify the line has SMS capability, check for sufficient balance if prepaid, verify the device has cellular service, check the message center number in device settings, and test with a different device if available.\n\n### MMS Not Sending\n\nIf a customer cannot send MMS: verify mobile data is working, check MMS APN settings, verify the messaging app has necessary permissions, check for sufficient storage space, and test with a different device if available.\n\n### Delayed Messages\n\nIf messages are delayed: check for network congestion, verify the device has good signal, check for large message sizes that may cause delays, and verify the recipient's network is operational."
+  },
+  {
+    "chunk_id": "technical-troubleshooting::s4",
+    "document_id": "technical-troubleshooting",
+    "document_title": "Technical Troubleshooting Guide",
+    "section_heading": "Account and Billing Issues",
+    "category": "support",
+    "chunk_index": 4,
+    "content": "### Incorrect Charges\n\nIf a customer disputes a charge: review the invoice details, check for any promotions or credits that should be applied, verify the plan pricing is correct, and apply credits or adjustments as appropriate per the billing dispute policy.\n\n### Payment Issues\n\nIf a customer has payment issues: verify the payment method is valid, check for sufficient funds, review the payment history, and assist with alternative payment methods if needed.\n\n### Plan Change Issues\n\nIf a customer has issues with a plan change: verify the change was processed correctly, check the effective date, verify any prorated charges are correct, and assist with any additional changes needed."
+  },
+  {
+    "chunk_id": "customer-retention::s0",
+    "document_id": "customer-retention",
+    "document_title": "Customer Retention Guide",
+    "section_heading": "",
+    "category": "support",
+    "chunk_index": 0,
+    "content": "# Customer Retention Guide"
+  },
+  {
+    "chunk_id": "customer-retention::s1",
+    "document_id": "customer-retention",
+    "document_title": "Customer Retention Guide",
+    "section_heading": "Overview",
+    "category": "support",
+    "chunk_index": 1,
+    "content": "This document describes the strategies and procedures for retaining customers who are considering leaving SmartConnect."
+  },
+  {
+    "chunk_id": "customer-retention::s2",
+    "document_id": "customer-retention",
+    "document_title": "Customer Retention Guide",
+    "section_heading": "Retention Triggers",
+    "category": "support",
+    "chunk_index": 2,
+    "content": "### Cancellation Request\n\nWhen a customer requests to cancel service: the cancellation request triggers a retention workflow. The representative must attempt to understand the reason for cancellation. The representative must offer solutions before processing the cancellation. Retention offers may be available based on the customer's profile.\n\n### Usage Pattern Changes\n\nSignificant decreases in usage may indicate a customer is considering leaving. Changes in usage patterns are monitored by the analytics team. Proactive outreach may be initiated for high-value customers showing churn indicators.\n\n### Competitive Offers\n\nCustomers who mention competitive offers should be flagged for retention. The representative should highlight SmartConnect's differentiators and value. Retention offers may be available to match competitive pricing."
+  },
+  {
+    "chunk_id": "customer-retention::s3",
+    "document_id": "customer-retention",
+    "document_title": "Customer Retention Guide",
+    "section_heading": "Retention Strategies",
+    "category": "support",
+    "chunk_index": 3,
+    "content": "### Service Resolution\n\nThe most effective retention strategy is resolving the customer's issue. If the customer is leaving due to a service problem, focus on resolving the problem. Document the issue thoroughly and follow up to ensure resolution.\n\n### Plan Optimization\n\nReview the customer's current plan and usage to identify optimization opportunities. The customer may be on a plan that does not match their needs. Offering a better-fitting plan can improve satisfaction and reduce cost.\n\n### Loyalty Rewards\n\nLong-term customers may be eligible for loyalty rewards. Loyalty rewards include plan discounts, free add-ons, and priority support. Loyalty rewards are available for customers with 2+ years of continuous service.\n\n### Financial Incentives\n\nRetention offers may include bill credits, plan discounts, or device offers. Retention offers are tiered based on customer value and tenure. Higher-value customers receive more generous retention offers. All retention offers must be approved by a supervisor."
+  },
+  {
+    "chunk_id": "customer-retention::s4",
+    "document_id": "customer-retention",
+    "document_title": "Customer Retention Guide",
+    "section_heading": "Retention Offer Matrix",
+    "category": "support",
+    "chunk_index": 4,
+    "content": "### High-Value Customers\n\nCustomers spending more than $100 per month or with 3+ years of tenure. Retention offers include up to 20% plan discount for 6 months, free premium add-ons for 3 months, and waived device upgrade fees. These offers require supervisor approval.\n\n### Medium-Value Customers\n\nCustomers spending $50-$100 per month or with 1-3 years of tenure. Retention offers include up to 10% plan discount for 3 months and free standard add-ons for 1 month. These offers require representative approval.\n\n### Low-Value Customers\n\nCustomers spending less than $50 per month or with less than 1 year of tenure. Retention offers include one-time bill credits up to $25 and waived activation fees. These offers require representative approval."
+  },
+  {
+    "chunk_id": "customer-retention::s5",
+    "document_id": "customer-retention",
+    "document_title": "Customer Retention Guide",
+    "section_heading": "Cancellation Processing",
+    "category": "support",
+    "chunk_index": 5,
+    "content": "### Final Attempt\n\nBefore processing a cancellation, make one final attempt to retain the customer. Summarize the value the customer receives from SmartConnect. Highlight any loyalty rewards or tenure benefits that would be lost. Offer the best available retention incentive.\n\n### Processing Cancellation\n\nIf the customer insists on cancellation: process the cancellation effective at the end of the current billing cycle. Inform the customer of any early termination fees or device financing balances. Provide instructions for returning any rented or financed equipment. Confirm the cancellation and provide a cancellation confirmation number.\n\n### Post-Cancellation\n\nAfter cancellation: send a confirmation email with the cancellation details. Include information about any final charges or credits. Provide information about how to reactivate service if the customer changes their mind. Note the cancellation reason for analytics purposes."
+  },
+  {
+    "chunk_id": "customer-retention::s6",
+    "document_id": "customer-retention",
+    "document_title": "Customer Retention Guide",
+    "section_heading": "Win-Back Program",
+    "category": "support",
+    "chunk_index": 6,
+    "content": "### Eligibility\n\nFormer customers who canceled within the last 90 days are eligible for the win-back program. The win-back offer is communicated via email and SMS. Win-back offers include enhanced plan pricing and waived activation fees.\n\n### Win-Back Process\n\nFormer customers can reactivate service through the win-back link in the communication. The reactivation process is simplified for returning customers. Previous account information is used to expedite setup. Win-back customers receive priority support for the first 90 days."
+  },
+  {
+    "chunk_id": "escalation-procedures::s0",
+    "document_id": "escalation-procedures",
+    "document_title": "Escalation Procedures",
+    "section_heading": "",
+    "category": "escalation",
+    "chunk_index": 0,
+    "content": "# Escalation Procedures"
+  },
+  {
+    "chunk_id": "escalation-procedures::s1",
+    "document_id": "escalation-procedures",
+    "document_title": "Escalation Procedures",
+    "section_heading": "Overview",
+    "category": "escalation",
+    "chunk_index": 1,
+    "content": "This document defines when and how issues should be escalated to higher tiers of support or specialized teams."
+  },
+  {
+    "chunk_id": "escalation-procedures::s2",
+    "document_id": "escalation-procedures",
+    "document_title": "Escalation Procedures",
+    "section_heading": "Escalation Tiers",
+    "category": "escalation",
+    "chunk_index": 2,
+    "content": "### Tier 1: Frontline Support\n\nHandles standard customer inquiries and simple troubleshooting. Can resolve most issues on first contact. Escalates to Tier 2 if issue is not resolved within 15 minutes or requires specialized knowledge. Maximum authority for credits up to $25.\n\n### Tier 2: Technical Support\n\nHandles complex technical issues and advanced troubleshooting. Can access network diagnostic tools and deeper account information. Escalates to Tier 3 if issue requires network-side investigation or vendor coordination. Maximum authority for credits up to $100.\n\n### Tier 3: Engineering and Specialists\n\nHandles network-level issues, vendor coordination, and complex billing disputes. Can make configuration changes on network equipment. Escalates to Tier 4 if issue requires vendor TAC support or architectural changes. Maximum authority for credits up to $500.\n\n### Tier 4: Vendor Support\n\nEngaged for hardware failures, complex software issues, and manufacturer defects. Provides TAC (Technical Assistance Center) support. Coordinates RMA (Return Merchandise Authorization) for defective equipment. Resolution timelines are governed by vendor SLAs."
+  },
+  {
+    "chunk_id": "escalation-procedures::s3",
+    "document_id": "escalation-procedures",
+    "document_title": "Escalation Procedures",
+    "section_heading": "Escalation Triggers",
+    "category": "escalation",
+    "chunk_index": 3,
+    "content": "### Time-Based Escalation\n\nIf a Tier 1 representative cannot resolve an issue within 15 minutes, the issue must be escalated. If a Tier 2 engineer cannot resolve an issue within 4 hours, the issue must be escalated. If a Tier 3 specialist cannot resolve an issue within 24 hours, the issue must be escalated. Time-based escalations ensure issues are resolved within SLA.\n\n### Severity-Based Escalation\n\nP1 (Critical) issues are automatically escalated to Tier 3 upon creation. P2 (High) issues are automatically escalated to Tier 2 upon creation. P3 (Medium) issues are handled by Tier 1 and escalated if needed. P4 (Low) issues are handled by Tier 1.\n\n### Customer-Requested Escalation\n\nCustomers have the right to request escalation at any time. The representative must honor the escalation request. The representative must document the reason for the escalation. The customer must be provided with the new case owner's contact information."
+  },
+  {
+    "chunk_id": "escalation-procedures::s4",
+    "document_id": "escalation-procedures",
+    "document_title": "Escalation Procedures",
+    "section_heading": "Escalation Process",
+    "category": "escalation",
+    "chunk_index": 4,
+    "content": "### Step 1: Document the Issue\n\nBefore escalating, the current owner must document: a summary of the issue, all troubleshooting steps attempted, current status and next steps, any customer commitments made, and the reason for escalation.\n\n### Step 2: Notify the Customer\n\nThe customer must be notified before the escalation takes place. The customer must be provided with the reason for the escalation. The customer must be provided with the new case owner's name and contact information. The customer must be provided with an updated resolution timeline.\n\n### Step 3: Transfer Ownership\n\nThe case is transferred to the appropriate escalation tier. All documentation is transferred with the case. The new owner reviews the case within 30 minutes of transfer. The new owner contacts the customer within 2 hours to confirm ownership.\n\n### Step 4: Follow Up\n\nThe original owner follows up with the escalation team within 24 hours. If the escalation is not progressing, the original owner escalates further. The customer is updated at least once per day until resolution."
+  },
+  {
+    "chunk_id": "escalation-procedures::s5",
+    "document_id": "escalation-procedures",
+    "document_title": "Escalation Procedures",
+    "section_heading": "Escalation Contacts",
+    "category": "escalation",
+    "chunk_index": 5,
+    "content": "### NOC Team\n\nNetwork Operations Center handles network-related escalations. Contact via the escalation bridge channel. Available 24/7 for P1 and P2 issues. Available during business hours for P3 and P4 issues.\n\n### Billing Investigation Team\n\nHandles complex billing disputes and payment issues. Contact via the billing escalation queue. Available during business hours. Response within 4 hours for standard issues, 1 hour for critical issues.\n\n### Customer Relations Team\n\nHandles complaint resolution and retention-sensitive cases. Contact via the customer relations queue. Available during business hours. Response within 2 hours for standard issues.\n\n### Legal and Compliance\n\nHandles legal inquiries, regulatory complaints, and compliance issues. Contact via the legal escalation queue. Available during business hours. Response within 24 hours."
+  },
+  {
+    "chunk_id": "escalation-procedures::s6",
+    "document_id": "escalation-procedures",
+    "document_title": "Escalation Procedures",
+    "section_heading": "Escalation Documentation",
+    "category": "escalation",
+    "chunk_index": 6,
+    "content": "### Escalation Notes\n\nAll escalations must include detailed notes in the case management system. Notes should include the timeline of events, customer impact, root cause (if known), actions taken, and recommended next steps. This documentation is essential for the escalation team to quickly understand and resolve the issue.\n\n### Post-Escalation Review\n\nAll P1 and P2 escalations require a post-escalation review. The review includes the escalation timeline, resolution effectiveness, and customer satisfaction. Lessons learned are documented and shared with the team. Process improvements are identified and implemented."
+  },
+  {
+    "chunk_id": "sla-management::s0",
+    "document_id": "sla-management",
+    "document_title": "SLA Management and Compliance",
+    "section_heading": "",
+    "category": "escalation",
+    "chunk_index": 0,
+    "content": "# SLA Management and Compliance"
+  },
+  {
+    "chunk_id": "sla-management::s1",
+    "document_id": "sla-management",
+    "document_title": "SLA Management and Compliance",
+    "section_heading": "Overview",
+    "category": "escalation",
+    "chunk_index": 1,
+    "content": "This document describes how SmartConnect manages Service Level Agreements (SLAs) with customers and measures compliance."
+  },
+  {
+    "chunk_id": "sla-management::s2",
+    "document_id": "sla-management",
+    "document_title": "SLA Management and Compliance",
+    "section_heading": "SLA Categories",
+    "category": "escalation",
+    "chunk_index": 2,
+    "content": "### Network Availability SLA\n\nGuarantees minimum network availability for the customer's service area. Standard availability guarantee is 99.9% uptime. Enterprise customers may have higher availability guarantees. SLA is measured on a monthly basis.\n\n### Response Time SLA\n\nGuarantees maximum response time for support inquiries. Critical issues: response within 15 minutes. High issues: response within 30 minutes. Medium issues: response within 2 hours. Low issues: response within 8 hours.\n\n### Resolution Time SLA\n\nGuarantees maximum resolution time for support issues. Critical issues: resolution within 4 hours. High issues: resolution within 8 hours. Medium issues: resolution within 24 hours. Low issues: resolution within 48 hours.\n\n### Data Speed SLA\n\nGuarantees minimum data speeds for the customer's plan. Speeds are measured at the network edge. Minimum speeds are specified in the customer's service agreement. Speeds may vary based on network conditions and congestion."
+  },
+  {
+    "chunk_id": "sla-management::s3",
+    "document_id": "sla-management",
+    "document_title": "SLA Management and Compliance",
+    "section_heading": "SLA Measurement",
+    "category": "escalation",
+    "chunk_index": 3,
+    "content": "### Uptime Calculation\n\nUptime is calculated as: (Total Minutes - Downtime Minutes) / Total Minutes x 100. Downtime is defined as any period where the customer's service is completely unavailable. Partial degradation does not count as downtime unless it exceeds 50% degradation for more than 15 minutes.\n\n### Response Time Calculation\n\nResponse time is measured from ticket creation to first meaningful response. A meaningful response includes acknowledgment of the issue and initial assessment. Automated responses do not count as meaningful responses. Response time is measured in business hours for non-critical issues.\n\n### Resolution Time Calculation\n\nResolution time is measured from ticket creation to confirmed resolution. Resolution is confirmed when the customer acknowledges the fix or the issue is automatically resolved. Resolution time includes all time the ticket is open, excluding time waiting for customer response."
+  },
+  {
+    "chunk_id": "sla-management::s4",
+    "document_id": "sla-management",
+    "document_title": "SLA Management and Compliance",
+    "section_heading": "SLA Breach Response",
+    "category": "escalation",
+    "chunk_index": 4,
+    "content": "### Immediate Actions\n\nWhen an SLA breach is detected: the responsible team is notified immediately, the customer is notified of the breach, a credit calculation is initiated, and a root cause analysis is started.\n\n### Customer Credit\n\nCustomers are entitled to credits for SLA breaches. Credit amount is calculated based on the severity and duration of the breach. Credits are applied to the customer's next bill. Credit calculation follows the formula in the customer's service agreement.\n\n### Root Cause Analysis\n\nA root cause analysis must be completed within 48 hours of any SLA breach. The analysis includes the timeline of events, the root cause, the impact on the customer, and preventive measures. Results are documented and shared with the customer upon request."
+  },
+  {
+    "chunk_id": "sla-management::s5",
+    "document_id": "sla-management",
+    "document_title": "SLA Management and Compliance",
+    "section_heading": "SLA Reporting",
+    "category": "escalation",
+    "chunk_index": 5,
+    "content": "### Internal Reporting\n\nSLA compliance is reported weekly to the operations leadership team. Reports include compliance rates by SLA type, breach counts and causes, and trend analysis. Reports are used to identify areas for improvement.\n\n### Customer Reporting\n\nEnterprise customers receive monthly SLA compliance reports. Reports include uptime measurements, response and resolution times, and any credits applied. Reports are provided through the customer portal or by request.\n\n### Regulatory Reporting\n\nSLA compliance may be required for regulatory filings. Regulatory reporting follows the specific requirements of the applicable regulatory body. Compliance data is maintained for the required retention period."
+  },
+  {
+    "chunk_id": "sla-management::s6",
+    "document_id": "sla-management",
+    "document_title": "SLA Management and Compliance",
+    "section_heading": "SLA Optimization",
+    "category": "escalation",
+    "chunk_index": 6,
+    "content": "### Continuous Improvement\n\nSLA metrics are reviewed quarterly to identify improvement opportunities. Common improvement areas include response time optimization, resolution time reduction, and uptime enhancement. Improvement initiatives are tracked and measured.\n\n### Technology Investments\n\nTechnology investments are evaluated based on their impact on SLA compliance. Priority investments include network redundancy, monitoring tools, and support automation. Return on investment is measured in terms of SLA improvement.\n\n### Process Optimization\n\nSupport processes are regularly reviewed for efficiency gains. Process improvements may include better training, improved tools, or streamlined workflows. All process changes are measured for their impact on SLA compliance."
+  },
+  {
+    "chunk_id": "complaint-handling::s0",
+    "document_id": "complaint-handling",
+    "document_title": "Complaint Handling Procedures",
+    "section_heading": "",
+    "category": "escalation",
+    "chunk_index": 0,
+    "content": "# Complaint Handling Procedures"
+  },
+  {
+    "chunk_id": "complaint-handling::s1",
+    "document_id": "complaint-handling",
+    "document_title": "Complaint Handling Procedures",
+    "section_heading": "Overview",
+    "category": "escalation",
+    "chunk_index": 1,
+    "content": "This document describes how SmartConnect handles customer complaints, from initial receipt through resolution and follow-up."
+  },
+  {
+    "chunk_id": "complaint-handling::s2",
+    "document_id": "complaint-handling",
+    "document_title": "Complaint Handling Procedures",
+    "section_heading": "Complaint Categories",
+    "category": "escalation",
+    "chunk_index": 2,
+    "content": "### Service Quality Complaints\n\nComplaints about the quality of voice, data, or messaging service. Includes dropped calls, slow data, poor coverage, and service outages. These complaints require technical investigation and may involve network engineering.\n\n### Billing Complaints\n\nComplaints about charges, payments, or account billing. Includes incorrect charges, unauthorized changes, and billing disputes. These complaints require billing investigation and may involve financial adjustments.\n\n### Customer Service Complaints\n\nComplaints about the quality of customer service interactions. Includes rude representatives, long wait times, and unresolved issues. These complaints require quality review and may involve additional training.\n\n### Product and Policy Complaints\n\nComplaints about product features, pricing, or company policies. Includes plan limitations, contract terms, and feature availability. These complaints require policy review and may involve management decision."
+  },
+  {
+    "chunk_id": "complaint-handling::s3",
+    "document_id": "complaint-handling",
+    "document_title": "Complaint Handling Procedures",
+    "section_heading": "Complaint Handling Process",
+    "category": "escalation",
+    "chunk_index": 3,
+    "content": "### Step 1: Receive and Acknowledge\n\nAll complaints are received through any customer contact channel. The complaint is acknowledged within 4 hours for standard complaints, 1 hour for urgent complaints. A case number is provided to the customer. The complaint is categorized and prioritized.\n\n### Step 2: Investigate\n\nThe assigned representative investigates the complaint thoroughly. This includes reviewing account history, service records, and any relevant documentation. The representative may contact the customer for additional information. The investigation is documented in the case management system.\n\n### Step 3: Resolve\n\nThe representative determines the appropriate resolution based on the investigation. Resolution may include service restoration, billing adjustment, policy exception, or other corrective action. The resolution is communicated to the customer clearly and completely. The customer is asked to confirm acceptance of the resolution.\n\n### Step 4: Follow Up\n\nThe representative follows up with the customer within 7 days of resolution. The follow-up confirms the resolution is working and the customer is satisfied. If the customer is not satisfied, the case is escalated for further review. The follow-up is documented in the case management system."
+  },
+  {
+    "chunk_id": "complaint-handling::s4",
+    "document_id": "complaint-handling",
+    "document_title": "Complaint Handling Procedures",
+    "section_heading": "Complaint Prioritization",
+    "category": "escalation",
+    "chunk_index": 4,
+    "content": "### Urgent Complaints\n\nComplaints involving safety concerns, regulatory issues, or significant financial impact. Response within 1 hour. Resolution within 24 hours. Escalation to management required.\n\n### High Priority Complaints\n\nComplaints involving service outages affecting multiple customers, billing errors over $100, or repeated unresolved issues. Response within 4 hours. Resolution within 48 hours. Escalation to supervisor required.\n\n### Standard Complaints\n\nGeneral complaints about service quality, billing, or customer service. Response within 24 hours. Resolution within 72 hours. Handled by frontline representatives."
+  },
+  {
+    "chunk_id": "complaint-handling::s5",
+    "document_id": "complaint-handling",
+    "document_title": "Complaint Handling Procedures",
+    "section_heading": "Complaint Resolution Standards",
+    "category": "escalation",
+    "chunk_index": 5,
+    "content": "### Fair Resolution\n\nAll complaints must be resolved fairly and equitably. The resolution must consider the customer's perspective and the company's policies. The resolution must be documented with a clear rationale. The resolution must be consistent with similar complaints.\n\n### Customer Communication\n\nThe customer must be kept informed throughout the complaint process. Updates are provided at least every 24 hours during investigation. The customer must be notified of any delays. All communication must be professional and empathetic.\n\n### Documentation\n\nAll complaint details, investigation findings, and resolutions must be documented. Documentation must be accurate and complete. Documentation is used for quality review, trend analysis, and training. Documentation is retained for the required period."
+  },
+  {
+    "chunk_id": "complaint-handling::s6",
+    "document_id": "complaint-handling",
+    "document_title": "Complaint Handling Procedures",
+    "section_heading": "Complaint Escalation",
+    "category": "escalation",
+    "chunk_index": 6,
+    "content": "### Customer-Initiated Escalation\n\nCustomers may request escalation at any point during the complaint process. The representative must honor the escalation request. The representative must document the reason for the escalation. The customer must be provided with the new case owner's contact information.\n\n### Managerial Escalation\n\nComplaints that cannot be resolved by the frontline representative are escalated to a supervisor. Managerial escalation includes all P1 complaints, complaints involving potential legal action, and complaints that have been unresolved for more than 72 hours. The supervisor must review and respond within 4 hours.\n\n### Executive Escalation\n\nComplaints that cannot be resolved at the managerial level are escalated to executive management. Executive escalation includes complaints from regulatory bodies, complaints involving significant financial exposure, and complaints that have been unresolved for more than 7 days. Executive management must review and respond within 24 hours."
+  },
+  {
+    "chunk_id": "enterprise-sla::s0",
+    "document_id": "enterprise-sla",
+    "document_title": "Enterprise Service Level Agreements",
+    "section_heading": "",
+    "category": "enterprise",
+    "chunk_index": 0,
+    "content": "# Enterprise Service Level Agreements"
+  },
+  {
+    "chunk_id": "enterprise-sla::s1",
+    "document_id": "enterprise-sla",
+    "document_title": "Enterprise Service Level Agreements",
+    "section_heading": "Overview",
+    "category": "enterprise",
+    "chunk_index": 1,
+    "content": "This document defines the Service Level Agreements (SLAs) provided to SmartConnect enterprise customers. Enterprise SLAs include enhanced guarantees for network availability, performance, and support responsiveness."
+  },
+  {
+    "chunk_id": "enterprise-sla::s2",
+    "document_id": "enterprise-sla",
+    "document_title": "Enterprise Service Level Agreements",
+    "section_heading": "SLA Tiers",
+    "category": "enterprise",
+    "chunk_index": 2,
+    "content": "### Platinum SLA\n\nTarget: 99.99% network availability. Maximum 4.3 minutes of downtime per month. Response time: 15 minutes for critical issues, 1 hour for high issues. Resolution time: 4 hours for critical issues, 8 hours for high issues. Dedicated account manager available 24/7. Quarterly business reviews.\n\n### Gold SLA\n\nTarget: 99.95% network availability. Maximum 21.9 minutes of downtime per month. Response time: 30 minutes for critical issues, 2 hours for high issues. Resolution time: 8 hours for critical issues, 24 hours for high issues. Dedicated account manager available during business hours. Monthly performance reports.\n\n### Silver SLA\n\nTarget: 99.9% network availability. Maximum 43.8 minutes of downtime per month. Response time: 1 hour for critical issues, 4 hours for high issues. Resolution time: 24 hours for critical issues, 48 hours for high issues. Shared account manager. Quarterly performance reports."
+  },
+  {
+    "chunk_id": "enterprise-sla::s3",
+    "document_id": "enterprise-sla",
+    "document_title": "Enterprise Service Level Agreements",
+    "section_heading": "Availability Measurement",
+    "category": "enterprise",
+    "chunk_index": 3,
+    "content": "### Measurement Period\n\nSLA availability is measured on a monthly basis. The measurement period is the calendar month. Availability is calculated at the end of each measurement period.\n\n### Exclusions\n\nScheduled maintenance windows are excluded from availability calculations. Maintenance windows must be scheduled at least 72 hours in advance. Maximum maintenance window is 4 hours per month. Emergency maintenance is excluded but must be reported within 24 hours.\n\n### Downtime Definition\n\nDowntime is defined as any period where the customer's primary connection is completely unavailable. Degraded performance does not constitute downtime unless it falls below 50% of the guaranteed bandwidth for more than 15 consecutive minutes."
+  },
+  {
+    "chunk_id": "enterprise-sla::s4",
+    "document_id": "enterprise-sla",
+    "document_title": "Enterprise Service Level Agreements",
+    "section_heading": "Performance Guarantees",
+    "category": "enterprise",
+    "chunk_index": 4,
+    "content": "### Bandwidth\n\nEnterprise SLAs guarantee minimum bandwidth levels. Guaranteed bandwidth is specified in the customer's service agreement. Actual bandwidth may exceed the guarantee during non-peak hours. Bandwidth is measured at the customer's demarcation point.\n\n### Latency\n\nMaximum latency from customer premises to SmartConnect network edge: Platinum: 10ms, Gold: 20ms, Silver: 30ms. Latency is measured using continuous synthetic probes. Latency measurements are averaged over 5-minute intervals.\n\n### Packet Loss\n\nMaximum packet loss: Platinum: 0.01%, Gold: 0.05%, Silver: 0.1%. Packet loss is measured using continuous synthetic probes. Packet loss measurements are averaged over 5-minute intervals."
+  },
+  {
+    "chunk_id": "enterprise-sla::s5",
+    "document_id": "enterprise-sla",
+    "document_title": "Enterprise Service Level Agreements",
+    "section_heading": "Credit Structure",
+    "category": "enterprise",
+    "chunk_index": 5,
+    "content": "### Availability Credits\n\nCredits for availability SLA breaches are calculated as a percentage of the monthly service fee. Platinum: 5% credit per 0.01% below guarantee. Gold: 5% credit per 0.05% below guarantee. Silver: 5% credit per 0.1% below guarantee. Maximum credit is 100% of the monthly service fee.\n\n### Performance Credits\n\nCredits for performance SLA breaches: Latency exceeded: 10% credit per measurement period. Packet loss exceeded: 10% credit per measurement period. Bandwidth below guarantee: 20% credit per measurement period. Performance credits are in addition to availability credits.\n\n### Claim Process\n\nEnterprise customers must submit SLA credit claims within 30 days of the breach. Claims must include the date, time, and duration of the breach. SmartConnect will validate the claim against monitoring data. Credits are applied within 30 days of claim approval."
+  },
+  {
+    "chunk_id": "enterprise-sla::s6",
+    "document_id": "enterprise-sla",
+    "document_title": "Enterprise Service Level Agreements",
+    "section_heading": "Support SLAs",
+    "category": "enterprise",
+    "chunk_index": 6,
+    "content": "### Response Times\n\nPlatinum: 15 minutes for P1, 30 minutes for P2, 1 hour for P3, 4 hours for P4. Gold: 30 minutes for P1, 1 hour for P2, 2 hours for P3, 8 hours for P4. Silver: 1 hour for P1, 2 hours for P2, 4 hours for P3, 24 hours for P4.\n\n### Resolution Times\n\nPlatinum: 4 hours for P1, 8 hours for P2, 24 hours for P3, 72 hours for P4. Gold: 8 hours for P1, 24 hours for P2, 48 hours for P3, 96 hours for P4. Silver: 24 hours for P1, 48 hours for P2, 96 hours for P3, 120 hours for P4.\n\n### Escalation Paths\n\nEnterprise customers have direct escalation paths to senior engineering and management. Escalation contacts are provided in the service agreement. Escalation response times are guaranteed in the SLA."
+  },
+  {
+    "chunk_id": "enterprise-sla::s7",
+    "document_id": "enterprise-sla",
+    "document_title": "Enterprise Service Level Agreements",
+    "section_heading": "Reporting and Review",
+    "category": "enterprise",
+    "chunk_index": 7,
+    "content": "### Monthly Reports\n\nEnterprise customers receive monthly performance reports. Reports include availability measurements, performance metrics, incident summaries, and credit calculations. Reports are delivered within 5 business days of the measurement period end.\n\n### Quarterly Business Reviews\n\nPlatinum and Gold customers receive quarterly business reviews. Reviews include SLA performance analysis, trend review, capacity planning, and optimization recommendations. Reviews are conducted by the account manager and technical team.\n\n### Annual Reviews\n\nAll enterprise customers receive annual reviews. Reviews include comprehensive SLA performance, contract review, and planning for the upcoming year. Reviews are conducted by senior management and the account team."
+  },
+  {
+    "chunk_id": "enterprise-support::s0",
+    "document_id": "enterprise-support",
+    "document_title": "Enterprise Support Operations",
+    "section_heading": "",
+    "category": "enterprise",
+    "chunk_index": 0,
+    "content": "# Enterprise Support Operations"
+  },
+  {
+    "chunk_id": "enterprise-support::s1",
+    "document_id": "enterprise-support",
+    "document_title": "Enterprise Support Operations",
+    "section_heading": "Overview",
+    "category": "enterprise",
+    "chunk_index": 1,
+    "content": "This document describes the specialized support operations for SmartConnect enterprise customers, including dedicated support teams, priority handling, and proactive monitoring."
+  },
+  {
+    "chunk_id": "enterprise-support::s2",
+    "document_id": "enterprise-support",
+    "document_title": "Enterprise Support Operations",
+    "section_heading": "Enterprise Support Structure",
+    "category": "enterprise",
+    "chunk_index": 2,
+    "content": "### Dedicated Account Management\n\nEnterprise customers are assigned a dedicated account manager. The account manager is the primary point of contact for all service-related matters. The account manager conducts regular business reviews and coordinates service improvements. Account manager contact information is provided in the service agreement.\n\n### Priority Support Queue\n\nEnterprise customer inquiries are routed to a priority support queue. The priority queue has shorter wait times and more experienced representatives. Enterprise customers bypass the standard IVR (Interactive Voice Response) system. Direct dial numbers are provided for enterprise support.\n\n### Technical Account Manager\n\nTechnical Account Managers (TAMs) provide advanced technical support for enterprise customers. TAMs have deep knowledge of the customer's network configuration and requirements. TAMs proactively monitor the customer's service and address potential issues. TAMs are available for architecture consultations and planning."
+  },
+  {
+    "chunk_id": "enterprise-support::s3",
+    "document_id": "enterprise-support",
+    "document_title": "Enterprise Support Operations",
+    "section_heading": "Proactive Monitoring",
+    "category": "enterprise",
+    "chunk_index": 3,
+    "content": "### 24/7 Monitoring\n\nEnterprise customer connections are monitored 24/7 by the Network Operations Center (NOC). Monitoring includes availability, performance, and security metrics. Anomalies are detected and investigated automatically. Proactive alerts are sent to the customer's designated contacts.\n\n### Health Checks\n\nRegular health checks are performed on enterprise customer connections. Health checks include bandwidth verification, latency testing, and configuration review. Health check results are included in monthly reports. Issues identified during health checks are resolved proactively.\n\n### Capacity Planning\n\nEnterprise customer usage patterns are analyzed for capacity planning. The account manager provides capacity recommendations based on usage trends. Capacity upgrades are recommended before the customer experiences performance issues. Capacity planning is included in quarterly business reviews."
+  },
+  {
+    "chunk_id": "enterprise-support::s4",
+    "document_id": "enterprise-support",
+    "document_title": "Enterprise Support Operations",
+    "section_heading": "Incident Management for Enterprise",
+    "category": "enterprise",
+    "chunk_index": 4,
+    "content": "### Dedicated Incident Response\n\nEnterprise customer incidents receive dedicated response from senior engineers. Incident bridges are established for P1 incidents. The customer's designated contacts are notified immediately. Regular status updates are provided during incident resolution.\n\n### Post-Incident Review\n\nAll P1 and P2 incidents affecting enterprise customers require a post-incident review. The review includes a detailed timeline, root cause analysis, and preventive recommendations. The review report is shared with the customer within 5 business days. Action items from the review are tracked to completion.\n\n### Communication Protocol\n\nEnterprise customers receive proactive communication during service incidents. Initial notification within 15 minutes of detection. Status updates every 30 minutes during active incidents. Resolution notification with summary and next steps. Follow-up communication within 24 hours with detailed report."
+  },
+  {
+    "chunk_id": "enterprise-support::s5",
+    "document_id": "enterprise-support",
+    "document_title": "Enterprise Support Operations",
+    "section_heading": "Custom Solutions",
+    "category": "enterprise",
+    "chunk_index": 5,
+    "content": "### Network Design\n\nEnterprise customers can request custom network designs. Custom designs are developed by the Solutions Engineering team. Designs include detailed architecture, capacity planning, and implementation timelines. Custom designs are reviewed and approved by the customer before implementation.\n\n### Integration Services\n\nSmartConnect provides integration services for enterprise customers. Integration services include API connectivity, VPN configuration, and custom routing. Integration services are scoped and priced based on complexity. Integration projects include project management and post-implementation support.\n\n### Managed Services\n\nEnterprise customers can subscribe to managed services for network operations. Managed services include monitoring, configuration management, and incident response. Managed services are tiered based on the level of support required. Managed services SLAs are specified in the service agreement."
+  },
+  {
+    "chunk_id": "enterprise-support::s6",
+    "document_id": "enterprise-support",
+    "document_title": "Enterprise Support Operations",
+    "section_heading": "Enterprise Billing",
+    "category": "enterprise",
+    "chunk_index": 6,
+    "content": "### Custom Invoicing\n\nEnterprise customers receive custom invoices tailored to their requirements. Custom invoices can include cost center allocation, department breakdowns, and project-based billing. Invoice formats include PDF, CSV, and EDI. Invoice delivery schedules are flexible.\n\n### Volume Discounts\n\nEnterprise customers receive volume discounts based on total service commitment. Discount tiers are: 5-10 lines: 5% discount, 11-25 lines: 10% discount, 26-50 lines: 15% discount, 51+ lines: 20% discount. Discounts apply to all recurring service charges.\n\n### Payment Terms\n\nStandard payment terms for enterprise customers: Net 30 days from invoice date. Extended payment terms may be available for large commitments. Early payment discounts may be available for annual prepayment. Payment methods include ACH, wire transfer, and corporate credit card."
+  },
+  {
+    "chunk_id": "enterprise-account-management::s0",
+    "document_id": "enterprise-account-management",
+    "document_title": "Enterprise Account Management",
+    "section_heading": "",
+    "category": "enterprise",
+    "chunk_index": 0,
+    "content": "# Enterprise Account Management"
+  },
+  {
+    "chunk_id": "enterprise-account-management::s1",
+    "document_id": "enterprise-account-management",
+    "document_title": "Enterprise Account Management",
+    "section_heading": "Overview",
+    "category": "enterprise",
+    "chunk_index": 1,
+    "content": "This document describes how SmartConnect manages enterprise customer accounts, including onboarding, ongoing management, and account reviews."
+  },
+  {
+    "chunk_id": "enterprise-account-management::s2",
+    "document_id": "enterprise-account-management",
+    "document_title": "Enterprise Account Management",
+    "section_heading": "Enterprise Account Lifecycle",
+    "category": "enterprise",
+    "chunk_index": 2,
+    "content": "### Onboarding\n\nEnterprise account onboarding begins with a kickoff meeting between the customer's team and SmartConnect's account team. The onboarding process includes: requirements gathering, solution design, implementation planning, service activation, and post-activation verification. Onboarding is typically completed within 30 days of contract signing.\n\n### Ongoing Management\n\nEnterprise accounts are managed through regular business reviews and proactive communication. The account manager conducts monthly check-ins with the customer's primary contacts. Quarterly business reviews include SLA performance analysis and optimization recommendations. Annual reviews include contract review and strategic planning.\n\n### Renewal\n\nEnterprise account renewals begin 90 days before the contract end date. The account manager initiates renewal discussions with the customer. Renewal includes service review, pricing update, and contract terms negotiation. Renewal offers are prepared and presented 60 days before contract end."
+  },
+  {
+    "chunk_id": "enterprise-account-management::s3",
+    "document_id": "enterprise-account-management",
+    "document_title": "Enterprise Account Management",
+    "section_heading": "Account Management Team",
+    "category": "enterprise",
+    "chunk_index": 3,
+    "content": "### Account Manager\n\nThe account manager is the primary point of contact for the enterprise customer. Responsibilities include: service oversight, issue escalation, business reviews, and contract management. The account manager is assigned at the beginning of the relationship and remains consistent.\n\n### Technical Account Manager (TAM)\n\nThe TAM provides technical expertise for the enterprise customer. Responsibilities include: technical consulting, architecture review, capacity planning, and incident management. The TAM works closely with the account manager and the customer's technical team.\n\n### Customer Success Manager\n\nThe Customer Success Manager focuses on maximizing customer value from SmartConnect services. Responsibilities include: adoption tracking, value realization, and optimization recommendations. The Customer Success Manager is available for Platinum and Gold tier customers."
+  },
+  {
+    "chunk_id": "enterprise-account-management::s4",
+    "document_id": "enterprise-account-management",
+    "document_title": "Enterprise Account Management",
+    "section_heading": "Business Reviews",
+    "category": "enterprise",
+    "chunk_index": 4,
+    "content": "### Monthly Check-In\n\nThe account manager conducts monthly check-ins with the customer's primary contacts. The check-in includes: service performance summary, open issue review, upcoming changes, and any customer concerns. The check-in is documented and shared with the customer.\n\n### Quarterly Business Review\n\nQuarterly business reviews include comprehensive SLA performance analysis, usage trends and capacity review, optimization recommendations, and strategic alignment discussion. The review is prepared by the account team and presented to the customer's leadership.\n\n### Annual Review\n\nAnnual reviews include: contract review and renewal planning, service portfolio review, strategic roadmap alignment, and executive relationship building. The review involves both organizations' leadership teams."
+  },
+  {
+    "chunk_id": "enterprise-account-management::s5",
+    "document_id": "enterprise-account-management",
+    "document_title": "Enterprise Account Management",
+    "section_heading": "Account Health Monitoring",
+    "category": "enterprise",
+    "chunk_index": 5,
+    "content": "### Health Score\n\nEach enterprise account is assigned a health score based on multiple factors: SLA performance, support ticket trends, usage growth, and relationship sentiment. The health score is updated monthly and reviewed by the account team.\n\n### Risk Indicators\n\nThe following indicators trigger account health reviews: SLA breaches exceeding 2 per quarter, support ticket volume increasing more than 20% quarter-over-quarter, usage declining more than 10% quarter-over-quarter, or negative sentiment detected in business reviews.\n\n### Intervention\n\nWhen risk indicators are detected, the account team develops an intervention plan. The plan may include: additional resources, service enhancements, pricing adjustments, or executive engagement. The intervention plan is implemented and monitored for effectiveness."
+  },
+  {
+    "chunk_id": "enterprise-account-management::s6",
+    "document_id": "enterprise-account-management",
+    "document_title": "Enterprise Account Management",
+    "section_heading": "Communication Channels",
+    "category": "enterprise",
+    "chunk_index": 6,
+    "content": "### Primary Contact\n\nThe account manager is the primary contact for all non-urgent communications. The account manager is available during business hours and responds within 4 hours. For urgent matters, the account manager can be reached via mobile phone.\n\n### Technical Contact\n\nThe TAM is the primary contact for technical inquiries and incidents. The TAM is available during business hours and on-call for P1 incidents. Technical inquiries are responded to within 2 hours.\n\n### Executive Contact\n\nExecutive sponsors from both organizations maintain a strategic relationship. Executive contact is reserved for significant issues, strategic discussions, and contract negotiations. Executive contact is coordinated through the account manager."
+  },
+  {
+    "chunk_id": "enterprise-account-management::s7",
+    "document_id": "enterprise-account-management",
+    "document_title": "Enterprise Account Management",
+    "section_heading": "Account Documentation",
+    "category": "enterprise",
+    "chunk_index": 7,
+    "content": "### Service Agreement\n\nThe service agreement defines the terms and conditions of the enterprise service. The agreement includes: service description, SLA guarantees, pricing, and contract terms. The agreement is maintained by the account manager and shared with the customer.\n\n### Network Design Document\n\nThe network design document describes the technical architecture of the enterprise service. The document includes: network topology, configuration details, capacity specifications, and integration requirements. The document is maintained by the TAM.\n\n### Meeting Minutes\n\nAll business reviews and significant meetings are documented. Meeting minutes include: attendees, discussion topics, decisions made, and action items. Meeting minutes are shared with all attendees within 2 business days. Action items are tracked to completion."
+  }
+]

@@ -40,15 +40,15 @@ Retention offers may include bill credits, plan discounts, or device offers. Ret
 
 ### High-Value Customers
 
-Customers spending more than $100 per month or with 3+ years of tenure. Retention offers include up to 20% plan discount for 6 months, free premium add-ons for 3 months, and waived device upgrade fees. These offers require supervisor approval.
+Customers spending more than ₹999 per month or with 3+ years of tenure. Retention offers include up to 20% plan discount for 6 months, free premium add-ons for 3 months, and waived device upgrade fees. These offers require supervisor approval.
 
 ### Medium-Value Customers
 
-Customers spending $50-$100 per month or with 1-3 years of tenure. Retention offers include up to 10% plan discount for 3 months and free standard add-ons for 1 month. These offers require representative approval.
+Customers spending ₹499-₹999 per month or with 1-3 years of tenure. Retention offers include up to 10% plan discount for 3 months and free standard add-ons for 1 month. These offers require representative approval.
 
 ### Low-Value Customers
 
-Customers spending less than $50 per month or with less than 1 year of tenure. Retention offers include one-time bill credits up to $25 and waived activation fees. These offers require representative approval.
+Customers spending less than ₹499 per month or with less than 1 year of tenure. Retention offers include one-time bill credits up to ₹199 and waived activation fees. These offers require representative approval.
 
 ## Cancellation Processing
 

@@ -1,5 +1,6 @@
 import logging
 import math
+from datetime import datetime, timezone
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Query
@@ -47,6 +48,14 @@ from src.api.schemas import (
     KnowledgeChunkListResponse,
     KnowledgeSection,
     KnowledgeChunkPreview,
+    CaseReasoningRequest,
+    CaseReasoningResponse,
+    RetrievalInfoSchema,
+    AIReasoningResultSchema,
+    CaseResolveRequest,
+    ResolutionDecision,
+    ReviewStateCreate,
+    ReviewStateResponse,
 )
 from src.core.config import SERVICE_NAME, GEMINI_CONFIGURED, FRONTEND_DIST
 from src.database.db import get_connection
@@ -58,6 +67,8 @@ from src.database.repositories.plan_repository import PlanRepository
 from src.services.dashboard_service import get_dashboard_overview
 from src.services.case_investigation_service import get_case_investigation
 from src.services import knowledge_service
+from src.services.ai_reasoning_service import analyze_case
+from src.services.resolution_service import resolve_case
 
 logger = logging.getLogger(__name__)
 
@@ -77,10 +88,14 @@ def _paginate(total: int, page: int, page_size: int) -> PaginationMeta:
 
 @router.get("/health", response_model=HealthResponse)
 async def health_check() -> HealthResponse:
+    from src.retrieval.vector_store import get_vector_store
+    store = get_vector_store()
     return HealthResponse(
         status="ok",
         service=SERVICE_NAME,
         gemini_configured=GEMINI_CONFIGURED,
+        faiss_loaded=store.is_loaded(),
+        faiss_vectors=store.total_vectors,
     )
 
 
@@ -534,6 +549,116 @@ async def get_knowledge_chunks(document_id: str) -> KnowledgeChunkListResponse:
         chunks=[KnowledgeChunk(**c) for c in chunks],
         total=len(chunks),
     )
+
+
+# ── AI Case Reasoning ───────────────────────────────────
+
+@router.post("/cases/{ticket_id}/reason", response_model=CaseReasoningResponse)
+async def reason_case(ticket_id: int, body: CaseReasoningRequest):
+    conn = get_connection()
+    try:
+        repo = TicketRepository(conn)
+        ticket = repo.get_by_id(ticket_id)
+        if not ticket:
+            raise HTTPException(status_code=404, detail="Ticket not found")
+
+        investigation = get_case_investigation(conn, ticket_id)
+        if not investigation:
+            raise HTTPException(status_code=500, detail="Failed to build investigation context")
+
+        result = analyze_case(investigation, question=body.question)
+
+        return CaseReasoningResponse(
+            case_id=str(ticket_id),
+            retrieval=RetrievalInfoSchema(**result["retrieval"]),
+            reasoning=AIReasoningResultSchema(**result["reasoning"]),
+        )
+    finally:
+        conn.close()
+
+
+# ── Case Resolution Decision Engine ─────────────────────
+
+@router.post("/cases/{ticket_id}/resolve", response_model=ResolutionDecision)
+async def resolve_case_endpoint(ticket_id: int, body: CaseResolveRequest | None = None):
+    conn = get_connection()
+    try:
+        repo = TicketRepository(conn)
+        ticket = repo.get_by_id(ticket_id)
+        if not ticket:
+            raise HTTPException(status_code=404, detail="Ticket not found")
+
+        question = body.question if body else None
+        result = resolve_case(conn, ticket_id, question=question)
+
+        return ResolutionDecision(**result)
+    finally:
+        conn.close()
+
+
+@router.post("/cases/{ticket_id}/review", response_model=ReviewStateResponse)
+async def submit_review(ticket_id: int, body: ReviewStateCreate):
+    conn = get_connection()
+    try:
+        repo = TicketRepository(conn)
+        ticket = repo.get_by_id(ticket_id)
+        if not ticket:
+            raise HTTPException(status_code=404, detail="Ticket not found")
+
+        now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
+        cursor = conn.execute(
+            "SELECT id FROM review_states WHERE ticket_id = ? ORDER BY id DESC LIMIT 1",
+            (ticket_id,),
+        )
+        row = cursor.fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="No resolution recommendation found for this case")
+
+        review_id = row[0]
+        conn.execute(
+            "UPDATE review_states SET reviewer_decision = ?, reason = ?, updated_at = ? WHERE id = ?",
+            (body.decision, body.reason or "", now, review_id),
+        )
+        conn.commit()
+
+        cursor = conn.execute(
+            "SELECT id, ticket_id, recommendation_category, recommendation_action, confidence, reviewer_decision, reason, created_at, updated_at FROM review_states WHERE id = ?",
+            (review_id,),
+        )
+        r = cursor.fetchone()
+        return ReviewStateResponse(
+            id=r[0], ticket_id=r[1], recommendation_category=r[2],
+            recommendation_action=r[3], confidence=r[4], reviewer_decision=r[5],
+            reason=r[6], created_at=r[7], updated_at=r[8],
+        )
+    finally:
+        conn.close()
+
+
+@router.get("/cases/{ticket_id}/review", response_model=list[ReviewStateResponse])
+async def get_review_states(ticket_id: int):
+    conn = get_connection()
+    try:
+        repo = TicketRepository(conn)
+        ticket = repo.get_by_id(ticket_id)
+        if not ticket:
+            raise HTTPException(status_code=404, detail="Ticket not found")
+
+        cursor = conn.execute(
+            "SELECT id, ticket_id, recommendation_category, recommendation_action, confidence, reviewer_decision, reason, created_at, updated_at FROM review_states WHERE ticket_id = ? ORDER BY created_at DESC",
+            (ticket_id,),
+        )
+        rows = cursor.fetchall()
+        return [
+            ReviewStateResponse(
+                id=r[0], ticket_id=r[1], recommendation_category=r[2],
+                recommendation_action=r[3], confidence=r[4], reviewer_decision=r[5],
+                reason=r[6], created_at=r[7], updated_at=r[8],
+            )
+            for r in rows
+        ]
+    finally:
+        conn.close()
 
 
 # ── Frontend Serving ────────────────────────────────────

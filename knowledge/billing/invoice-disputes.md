@@ -48,7 +48,7 @@ The customer is notified of the resolution via their preferred communication met
 
 ### Automatic Credits
 
-Credits below $25 can be applied by customer service representatives without supervisor approval. Credits between $25 and $100 require supervisor approval. Credits above $100 require management approval. All credits are documented with a reason code.
+Credits below ₹199 can be applied by customer service representatives without supervisor approval. Credits between ₹199 and ₹999 require supervisor approval. Credits above ₹999 require management approval. All credits are documented with a reason code.
 
 ### Recurring Credits
 

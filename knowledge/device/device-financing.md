@@ -12,11 +12,11 @@ The device cost is divided into equal monthly installments over 24 or 36 months.
 
 ### Eligibility
 
-Customers must have an active SmartConnect account in good standing. The account must not have any past due balance. The customer must pass a credit check for financing amounts above $500. New customers may be required to make a down payment.
+Customers must have an active SmartConnect account in good standing. The account must not have any past due balance. The customer must pass a credit check for financing amounts above ₹4,999. New customers may be required to make a down payment.
 
 ### Credit Check
 
-A soft credit check is performed for financing amounts up to $500. A hard credit check is performed for financing amounts above $500. The credit check does not affect the customer's credit score for soft checks. Customers who do not qualify for financing may pay the full retail price or make a down payment.
+A soft credit check is performed for financing amounts up to ₹4,999. A hard credit check is performed for financing amounts above ₹4,999. The credit check does not affect the customer's credit score for soft checks. Customers who do not qualify for financing may pay the full retail price or make a down payment.
 
 ## Financing Agreement
 

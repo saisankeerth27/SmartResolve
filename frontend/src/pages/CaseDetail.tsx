@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { fetchInvestigation } from '../services/api'
-import type { CaseInvestigationContext } from '../types/case'
+import { fetchInvestigation, fetchReasoning, fetchResolution, submitReview } from '../services/api'
+import type { CaseInvestigationContext, CaseReasoningResponse, ResolutionDecision } from '../types/case'
 import { StatusBadge, PriorityBadge, SeverityIndicator, TechBadge, SegmentBadge } from '../components/common/Badges'
 import { LoadingState, ErrorState } from '../components/common/States'
 
@@ -138,12 +138,497 @@ function InteractionIcon({ type }: { type: string }) {
   )
 }
 
+function AiResultPanel({ result }: { result: CaseReasoningResponse }) {
+  const navigate = useNavigate()
+  const { reasoning, retrieval } = result
+  const isGrounded = reasoning.status === 'grounded'
+
+  const confidenceConfig: Record<string, { bg: string; text: string; border: string; label: string }> = {
+    high: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', label: 'HIGH' },
+    medium: { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200', label: 'MEDIUM' },
+    low: { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200', label: 'LOW' },
+  }
+  const conf = confidenceConfig[reasoning.confidence] || confidenceConfig.low
+
+  return (
+    <div className="space-y-4">
+      {/* Status Banner */}
+      <div className={`px-3 py-2 rounded-lg border ${isGrounded ? 'bg-emerald-50 border-emerald-200' : 'bg-amber-50 border-amber-200'}`}>
+        <div className="flex items-center gap-2">
+          {isGrounded ? (
+            <svg className="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          ) : (
+            <svg className="w-4 h-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+          )}
+          <span className={`text-xs font-semibold ${isGrounded ? 'text-emerald-700' : 'text-amber-700'}`}>
+            {isGrounded ? 'Grounded Assessment' : 'Insufficient Evidence'}
+          </span>
+        </div>
+      </div>
+
+      {/* Summary */}
+      <div>
+        <h4 className="text-xs font-semibold text-surface-700 uppercase tracking-wide mb-1.5">Summary</h4>
+        <p className="text-sm text-surface-700 leading-relaxed">{reasoning.summary}</p>
+      </div>
+
+      {/* Possible Causes */}
+      {reasoning.possible_causes.length > 0 && (
+        <div>
+          <h4 className="text-xs font-semibold text-surface-700 uppercase tracking-wide mb-1.5">Possible Causes</h4>
+          <div className="space-y-2">
+            {reasoning.possible_causes.map((cause, i) => (
+              <div key={i} className="border border-surface-100 rounded-lg p-2.5">
+                <p className="text-sm font-medium text-surface-800">{cause.cause}</p>
+                {cause.evidence.length > 0 && (
+                  <div className="mt-1.5 space-y-1">
+                    {cause.evidence.map((ev, j) => (
+                      <div key={j} className="flex items-start gap-1.5">
+                        <span className="text-[10px] text-surface-400 mt-0.5">evidence</span>
+                        <span className="text-xs text-surface-600">{ev}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Recommended Next Steps */}
+      {reasoning.recommended_next_steps.length > 0 && (
+        <div>
+          <h4 className="text-xs font-semibold text-surface-700 uppercase tracking-wide mb-1.5">Recommended Next Steps</h4>
+          <ol className="space-y-1.5">
+            {reasoning.recommended_next_steps.map((step, i) => (
+              <li key={i} className="flex items-start gap-2">
+                <span className="text-xs font-mono text-brand-600 mt-0.5 shrink-0">{i + 1}.</span>
+                <span className="text-xs text-surface-700">{step}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
+
+      {/* Confidence */}
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-surface-500">Confidence:</span>
+        <span className={`inline-flex items-center px-2 py-0.5 text-[10px] font-semibold rounded border ${conf.bg} ${conf.text} ${conf.border}`}>
+          {conf.label}
+        </span>
+      </div>
+
+      {/* Knowledge Sources */}
+      {reasoning.knowledge_citations.length > 0 && (
+        <div>
+          <h4 className="text-xs font-semibold text-surface-700 uppercase tracking-wide mb-1.5">Knowledge Sources</h4>
+          <div className="space-y-1.5">
+            {reasoning.knowledge_citations.map((cit, i) => (
+              <button
+                key={i}
+                onClick={() => navigate(`/knowledge/${cit.document_id}`)}
+                className="w-full text-left p-2 rounded-lg border border-surface-100 hover:border-brand-200 hover:bg-brand-50/30 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-mono text-brand-600">{cit.document_id}</span>
+                </div>
+                <p className="text-xs text-surface-600 mt-0.5">{cit.document_title}</p>
+                <p className="text-[10px] text-surface-400 mt-0.5">Section: {cit.section}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Operational Evidence Indicator */}
+      {retrieval.results.length > 0 && (
+        <div>
+          <h4 className="text-xs font-semibold text-surface-700 uppercase tracking-wide mb-1.5">Operational Evidence</h4>
+          <div className="space-y-1">
+            {retrieval.results.slice(0, 3).map((r, i) => (
+              <div key={i} className="flex items-center gap-2 text-xs">
+                <svg className="w-3 h-3 text-emerald-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                <span className="text-surface-600">{r.document_title} — {r.section_heading}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Limitations */}
+      {reasoning.limitations.length > 0 && (
+        <div>
+          <h4 className="text-xs font-semibold text-surface-700 uppercase tracking-wide mb-1.5">Limitations</h4>
+          <div className="space-y-1">
+            {reasoning.limitations.map((lim, i) => (
+              <div key={i} className="flex items-start gap-2">
+                <svg className="w-3 h-3 text-surface-400 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                <span className="text-xs text-surface-500">{lim}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Re-analyze */}
+      <button
+        onClick={() => {}}
+        className="w-full px-3 py-1.5 text-xs font-medium text-surface-600 bg-surface-50 border border-surface-200 rounded-lg hover:bg-surface-100 transition-colors"
+      >
+        Re-analyze
+      </button>
+    </div>
+  )
+}
+
+function ResolutionPanel({
+  resolution,
+  status,
+  error,
+  onRunResolution,
+  onReviewDecision,
+  reviewDecision,
+  evidenceExpanded,
+  setEvidenceExpanded,
+}: {
+  resolution: ResolutionDecision | null
+  status: 'idle' | 'loading' | 'done' | 'error'
+  error: string | null
+  onRunResolution: () => void
+  onReviewDecision: (decision: string) => void
+  reviewDecision: string | null
+  evidenceExpanded: boolean
+  setEvidenceExpanded: (v: boolean) => void
+}) {
+  const navigate = useNavigate()
+
+  const categoryLabels: Record<string, string> = {
+    network_investigation: 'Network Investigation',
+    incident_review: 'Incident Review',
+    customer_troubleshooting: 'Customer Troubleshooting',
+    billing_review: 'Billing Review',
+    device_diagnostics: 'Device Diagnostics',
+    service_configuration_review: 'Service Configuration Review',
+    monitoring: 'Monitoring',
+    human_escalation: 'Human Escalation',
+    insufficient_evidence: 'Insufficient Evidence',
+  }
+
+  const categoryIcons: Record<string, string> = {
+    network_investigation: 'M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z',
+    incident_review: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z',
+    customer_troubleshooting: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z',
+    billing_review: 'M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z',
+    device_diagnostics: 'M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z',
+    service_configuration_review: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z',
+    monitoring: 'M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z',
+    human_escalation: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z',
+    insufficient_evidence: 'M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
+  }
+
+  const confidenceConfig: Record<string, { bg: string; text: string; border: string; label: string }> = {
+    high: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', label: 'HIGH' },
+    medium: { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200', label: 'MEDIUM' },
+    low: { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200', label: 'LOW' },
+  }
+  const conf = confidenceConfig[resolution?.confidence || 'low'] || confidenceConfig.low
+
+  return (
+    <div className="space-y-4">
+      {status === 'idle' && (
+        <>
+          <p className="text-xs text-surface-500">Combine deterministic rules, operational evidence, and grounded AI reasoning into a structured resolution recommendation.</p>
+          <button
+            onClick={onRunResolution}
+            className="w-full px-4 py-2.5 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors flex items-center justify-center gap-2"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+            </svg>
+            Generate Resolution
+          </button>
+        </>
+      )}
+
+      {status === 'loading' && (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-brand-600">
+            <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+            </svg>
+            <span className="text-sm font-medium">Building resolution recommendation...</span>
+          </div>
+          <div className="text-xs text-surface-400 space-y-1 pl-6">
+            <p>Evaluating deterministic rules...</p>
+            <p>Running grounded AI analysis...</p>
+            <p>Combining evidence sources...</p>
+          </div>
+        </div>
+      )}
+
+      {status === 'error' && (
+        <div className="space-y-2">
+          <div className="px-3 py-2 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-xs text-red-700">{error}</p>
+          </div>
+          <button
+            onClick={onRunResolution}
+            className="w-full px-3 py-1.5 text-xs font-medium text-brand-600 bg-brand-50 border border-brand-200 rounded-lg hover:bg-brand-100 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      {resolution && status === 'done' && (
+        <div className="space-y-4">
+          {/* Primary Recommendation */}
+          <div className={`px-3 py-3 rounded-lg border ${resolution.conflicts.length > 0 ? 'bg-amber-50 border-amber-200' : 'bg-emerald-50 border-emerald-200'}`}>
+            <div className="flex items-start gap-3">
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${resolution.conflicts.length > 0 ? 'bg-amber-100' : 'bg-emerald-100'}`}>
+                <svg className={`w-4 h-4 ${resolution.conflicts.length > 0 ? 'text-amber-600' : 'text-emerald-600'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d={categoryIcons[resolution.primary_recommendation.category] || categoryIcons.monitoring} />
+                </svg>
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] font-medium text-surface-500 uppercase tracking-wide">{categoryLabels[resolution.primary_recommendation.category] || resolution.primary_recommendation.category}</p>
+                <p className="text-sm font-medium text-surface-900 mt-0.5">{resolution.primary_recommendation.action}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Confidence + Human Review */}
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-surface-500">Confidence:</span>
+              <span className={`inline-flex items-center px-2 py-0.5 text-[10px] font-semibold rounded border ${conf.bg} ${conf.text} ${conf.border}`}>
+                {conf.label}
+              </span>
+            </div>
+            {resolution.requires_human_review && (
+              <div className="flex items-center gap-1.5 px-2 py-0.5 bg-amber-50 border border-amber-200 rounded">
+                <svg className="w-3 h-3 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                <span className="text-[10px] font-semibold text-amber-700">HUMAN REVIEW REQUIRED</span>
+              </div>
+            )}
+          </div>
+
+          {/* Why SmartResolve recommends this */}
+          {resolution.confidence_reasons.length > 0 && (
+            <div>
+              <h4 className="text-xs font-semibold text-surface-700 uppercase tracking-wide mb-1.5">Why SmartResolve recommends this</h4>
+              <div className="space-y-1.5">
+                {resolution.confidence_reasons.map((reason, i) => (
+                  <div key={i} className="flex items-start gap-2">
+                    <svg className="w-3.5 h-3.5 text-emerald-500 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span className="text-xs text-surface-700">{reason}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Conflicts */}
+          {resolution.conflicts.length > 0 && (
+            <div className="px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg">
+              <h4 className="text-xs font-semibold text-amber-700 mb-1">Conflicts Detected</h4>
+              {resolution.conflicts.map((c, i) => (
+                <p key={i} className="text-xs text-amber-600">{c}</p>
+              ))}
+            </div>
+          )}
+
+          {/* Evidence (expandable) */}
+          {resolution.evidence.length > 0 && (
+            <div>
+              <button
+                onClick={() => setEvidenceExpanded(!evidenceExpanded)}
+                className="flex items-center gap-2 text-xs font-semibold text-surface-700 uppercase tracking-wide mb-1.5 hover:text-surface-900"
+              >
+                <svg className={`w-3 h-3 transition-transform ${evidenceExpanded ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+                Evidence ({resolution.evidence.length})
+              </button>
+              {evidenceExpanded && (
+                <div className="space-y-2 mt-2">
+                  {resolution.evidence.map((ev, i) => (
+                    <div key={i} className="p-2 rounded-lg bg-surface-50 border border-surface-100">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <span className={`text-[9px] font-semibold uppercase px-1.5 py-0.5 rounded ${
+                          ev.type === 'operational' ? 'bg-blue-100 text-blue-700' :
+                          ev.type === 'knowledge' ? 'bg-purple-100 text-purple-700' :
+                          'bg-surface-200 text-surface-600'
+                        }`}>
+                          {ev.type}
+                        </span>
+                        <span className="text-[10px] text-surface-400">{ev.source}</span>
+                        {ev.reference && <span className="text-[10px] font-mono text-surface-400">{ev.reference}</span>}
+                      </div>
+                      <p className="text-xs text-surface-700">{ev.statement}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Deterministic Findings */}
+          {resolution.deterministic_findings.length > 0 && (
+            <div>
+              <h4 className="text-xs font-semibold text-surface-700 uppercase tracking-wide mb-1.5">Deterministic Findings</h4>
+              <div className="space-y-1">
+                {resolution.deterministic_findings.map((f, i) => (
+                  <div key={i} className="flex items-start gap-2">
+                    <span className="text-[10px] font-mono text-brand-600 mt-0.5 shrink-0">RULE</span>
+                    <span className="text-xs text-surface-700">{f}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Alternative Actions */}
+          {resolution.alternative_actions.length > 0 && (
+            <div>
+              <h4 className="text-xs font-semibold text-surface-700 uppercase tracking-wide mb-1.5">Alternative Actions</h4>
+              <div className="space-y-1.5">
+                {resolution.alternative_actions.map((alt, i) => (
+                  <div key={i} className="p-2 rounded-lg border border-surface-100">
+                    <p className="text-[10px] font-medium text-surface-500 uppercase">{categoryLabels[alt.category] || alt.category}</p>
+                    <p className="text-xs text-surface-700 mt-0.5">{alt.action}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Knowledge Sources */}
+          {resolution.knowledge_sources.length > 0 && (
+            <div>
+              <h4 className="text-xs font-semibold text-surface-700 uppercase tracking-wide mb-1.5">Knowledge Sources</h4>
+              <div className="space-y-1.5">
+                {resolution.knowledge_sources.map((src, i) => (
+                  <button
+                    key={i}
+                    onClick={() => navigate(`/knowledge/${src.document_id}`)}
+                    className="w-full text-left p-2 rounded-lg border border-surface-100 hover:border-brand-200 hover:bg-brand-50/30 transition-colors"
+                  >
+                    <span className="text-xs font-mono text-brand-600">{src.document_id}</span>
+                    {src.section && <span className="text-xs text-surface-500 ml-2">/ {src.section}</span>}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* AI Assessment */}
+          {resolution.ai_assessment && resolution.ai_assessment.summary && (
+            <div>
+              <h4 className="text-xs font-semibold text-surface-700 uppercase tracking-wide mb-1.5">AI Assessment</h4>
+              <div className="p-2.5 rounded-lg bg-surface-50 border border-surface-100">
+                <p className="text-xs text-surface-700 leading-relaxed">{resolution.ai_assessment.summary}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Limitations */}
+          {resolution.limitations.length > 0 && (
+            <div>
+              <h4 className="text-xs font-semibold text-surface-700 uppercase tracking-wide mb-1.5">Limitations</h4>
+              <div className="space-y-1">
+                {resolution.limitations.map((lim, i) => (
+                  <div key={i} className="flex items-start gap-2">
+                    <svg className="w-3 h-3 text-surface-400 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    <span className="text-xs text-surface-500">{lim}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Human Decision Controls */}
+          {resolution.requires_human_review && (
+            <div className="pt-3 border-t border-surface-100">
+              <h4 className="text-xs font-semibold text-surface-700 uppercase tracking-wide mb-2">Human Decision</h4>
+              {reviewDecision ? (
+                <div className="px-3 py-2 bg-emerald-50 border border-emerald-200 rounded-lg">
+                  <p className="text-xs text-emerald-700 font-medium">Decision recorded: {reviewDecision.replace(/_/g, ' ').toUpperCase()}</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => onReviewDecision('approved')}
+                    className="px-3 py-2 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition-colors"
+                  >
+                    Approve
+                  </button>
+                  <button
+                    onClick={() => onReviewDecision('needs_information')}
+                    className="px-3 py-2 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors"
+                  >
+                    Need Info
+                  </button>
+                  <button
+                    onClick={() => onReviewDecision('escalation_requested')}
+                    className="px-3 py-2 text-xs font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
+                  >
+                    Escalate
+                  </button>
+                  <button
+                    onClick={() => onReviewDecision('dismissed')}
+                    className="px-3 py-2 text-xs font-medium text-surface-600 bg-surface-50 border border-surface-200 rounded-lg hover:bg-surface-100 transition-colors"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Regenerate */}
+          <button
+            onClick={onRunResolution}
+            className="w-full px-3 py-1.5 text-xs font-medium text-surface-600 bg-surface-50 border border-surface-200 rounded-lg hover:bg-surface-100 transition-colors"
+          >
+            Regenerate Resolution
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function CaseDetailPage() {
   const { ticketId } = useParams<{ ticketId: string }>()
   const navigate = useNavigate()
   const [data, setData] = useState<CaseInvestigationContext | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [aiResult, setAiResult] = useState<CaseReasoningResponse | null>(null)
+  const [aiError, setAiError] = useState<string | null>(null)
+  const [aiStatus, setAiStatus] = useState<'idle' | 'analyzing' | 'done' | 'error'>('idle')
+  const [resolution, setResolution] = useState<ResolutionDecision | null>(null)
+  const [resolutionStatus, setResolutionStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
+  const [resolutionError, setResolutionError] = useState<string | null>(null)
+  const [reviewDecision, setReviewDecision] = useState<string | null>(null)
+  const [evidenceExpanded, setEvidenceExpanded] = useState(false)
 
   const fetchData = useCallback(async () => {
     if (!ticketId) return
@@ -158,6 +643,46 @@ export function CaseDetailPage() {
       setLoading(false)
     }
   }, [ticketId])
+
+  const runAnalysis = useCallback(async () => {
+    if (!ticketId) return
+    setAiError(null)
+    setAiStatus('analyzing')
+    setAiResult(null)
+    try {
+      const result = await fetchReasoning(Number(ticketId), 'What is the most likely explanation for this case?')
+      setAiResult(result)
+      setAiStatus('done')
+    } catch (err) {
+      setAiError(err instanceof Error ? err.message : 'AI analysis failed')
+      setAiStatus('error')
+    }
+  }, [ticketId])
+
+  const runResolution = useCallback(async () => {
+    if (!ticketId) return
+    setResolutionError(null)
+    setResolutionStatus('loading')
+    setResolution(null)
+    try {
+      const result = await fetchResolution(Number(ticketId))
+      setResolution(result)
+      setResolutionStatus('done')
+    } catch (err) {
+      setResolutionError(err instanceof Error ? err.message : 'Resolution analysis failed')
+      setResolutionStatus('error')
+    }
+  }, [ticketId])
+
+  const handleReviewDecision = useCallback(async (decision: string) => {
+    if (!ticketId || !resolution) return
+    try {
+      await submitReview(Number(ticketId), decision, `Reviewer selected: ${decision}`)
+      setReviewDecision(decision)
+    } catch (err) {
+      console.error('Failed to submit review:', err)
+    }
+  }, [ticketId, resolution])
 
   useEffect(() => {
     fetchData()
@@ -260,7 +785,7 @@ export function CaseDetailPage() {
                   <FieldRow label="Service Type" value={subscription.service_type} />
                   <FieldRow label="Plan" value={subscription.plan_name} />
                   <FieldRow label="Plan Type" value={subscription.plan_type} />
-                  <FieldRow label="Monthly Price" value={`$${subscription.monthly_price}`} />
+                  <FieldRow label="Monthly Price" value={`₹${subscription.monthly_price}`} />
                 </div>
                 <div>
                   <FieldRow label="Activation Date" value={subscription.activation_date?.split('T')[0]} />
@@ -427,8 +952,75 @@ export function CaseDetailPage() {
           )}
         </div>
 
-        {/* Right column - Investigation Summary + Timeline + Interactions */}
+        {/* Right column - Investigation Summary + AI + Timeline + Interactions */}
         <div className="space-y-4">
+          {/* AI Investigation Panel */}
+          <PanelCard title="AI Investigation" className="border-brand-200">
+            <div className="space-y-3">
+              <p className="text-xs text-surface-500">Analyze this case using operational data and telecom knowledge.</p>
+
+              {aiStatus === 'idle' && (
+                <button
+                  onClick={runAnalysis}
+                  className="w-full px-4 py-2.5 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors flex items-center justify-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  Analyze Case
+                </button>
+              )}
+
+              {aiStatus === 'analyzing' && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-brand-600">
+                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    <span className="text-sm font-medium">Analyzing operational evidence...</span>
+                  </div>
+                  <div className="text-xs text-surface-400 space-y-1 pl-6">
+                    <p>Retrieving relevant procedures...</p>
+                    <p>Generating grounded assessment...</p>
+                  </div>
+                </div>
+              )}
+
+              {aiStatus === 'error' && (
+                <div className="space-y-2">
+                  <div className="px-3 py-2 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-xs text-red-700">{aiError}</p>
+                  </div>
+                  <button
+                    onClick={runAnalysis}
+                    className="w-full px-3 py-1.5 text-xs font-medium text-brand-600 bg-brand-50 border border-brand-200 rounded-lg hover:bg-brand-100 transition-colors"
+                  >
+                    Retry Analysis
+                  </button>
+                </div>
+              )}
+
+              {aiResult && aiStatus === 'done' && (
+                <AiResultPanel result={aiResult} />
+              )}
+            </div>
+          </PanelCard>
+
+          {/* Resolution Recommendation Panel */}
+          <PanelCard title="Resolution Recommendation" className="border-brand-200">
+            <ResolutionPanel
+              resolution={resolution}
+              status={resolutionStatus}
+              error={resolutionError}
+              onRunResolution={runResolution}
+              onReviewDecision={handleReviewDecision}
+              reviewDecision={reviewDecision}
+              evidenceExpanded={evidenceExpanded}
+              setEvidenceExpanded={setEvidenceExpanded}
+            />
+          </PanelCard>
+
           {/* Investigation Summary */}
           <PanelCard title="Investigation Summary">
             <div className="space-y-1">

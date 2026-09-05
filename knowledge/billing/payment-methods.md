@@ -4,29 +4,33 @@
 
 ### Credit and Debit Cards
 
-Visa, MasterCard, American Express, and Discover are accepted. Cards must be valid and have sufficient funds. Recurring payments can be set up for automatic billing. A convenience fee may apply for certain card types.
+Visa, MasterCard, RuPay, and American Express are accepted. Cards must be valid and have sufficient funds. Recurring payments can be set up for automatic billing. A convenience fee may apply for certain card types.
 
-### Bank Account (ACH)
+### UPI (Unified Payments Interface)
 
-Direct debit from a checking or savings account. ACH payments are free for customers. Processing takes 3-5 business days. The customer must provide routing and account numbers.
+UPI is accepted for one-time and recurring payments. Customers can pay using any UPI-enabled app such as Google Pay, PhonePe, Paytm, or BHIM. UPI payments are processed immediately. No convenience fees apply. UPI is the preferred payment method for its speed and convenience.
+
+### Net Banking
+
+Direct debit from a savings or current account via net banking. Net banking payments are free for customers. Processing takes 1-2 business days. The customer must select their bank and complete authentication.
 
 ### Digital Wallets
 
-Apple Pay, Google Pay, and Samsung Pay are accepted for one-time payments. Digital wallet payments are processed immediately. No convenience fees apply. Digital wallets cannot be used for recurring payments.
+Paytm, PhonePe, Google Pay, and Amazon Pay are accepted for one-time payments. Digital wallet payments are processed immediately. No convenience fees apply. Digital wallets can be used for recurring payments where supported.
 
 ### In-Person Payments
 
-Cash, check, and card payments are accepted at authorized payment locations. Payments are posted to the account within 1 business day. A receipt is provided for all in-person payments.
+Cash, card, and UPI payments are accepted at authorized payment locations. Payments are posted to the account within 1 business day. A receipt is provided for all in-person payments.
 
-### Mail-In Payments
+### Auto-Debit (NACH)
 
-Check or money order payments can be mailed to the payment processing center. Payments are posted when received and processed. Allow 7-10 business days for mail-in payments to be applied.
+National Automated Clearing House (NACH) is available for recurring payments. NACH mandates can be set up through the mobile app or customer portal. Payments are debited automatically on the billing due date. NACH is free for customers.
 
 ## Payment Processing
 
 ### Payment Posting
 
-Payments are posted to the customer's account based on the payment method. Credit card and digital wallet payments post immediately. ACH payments post in 3-5 business days. Mail-in payments post within 2 business days of receipt.
+Payments are posted to the customer's account based on the payment method. Credit card, UPI, and digital wallet payments post immediately. Net banking payments post in 1-2 business days. NACH payments post within 2 business days of debit.
 
 ### Payment Application
 
@@ -40,11 +44,11 @@ Customers receive confirmation of their payment via their preferred communicatio
 
 ### Enrollment
 
-Customers can enroll in AutoPay through the mobile app, customer portal, or by contacting customer service. AutoPay requires a valid payment method on file. The payment method is charged on the billing due date each month.
+Customers can enroll in AutoPay through the mobile app, customer portal, or by contacting customer service. AutoPay requires a valid UPI mandate or NACH mandate on file. The payment method is charged on the billing due date each month.
 
 ### AutoPay Benefits
 
-Customers enrolled in AutoPay receive a $5 per month discount on their service. The discount is applied automatically each month. The discount is lost if AutoPay is canceled or if a payment fails.
+Customers enrolled in AutoPay receive a ₹49 per month discount on their service. The discount is applied automatically each month. The discount is lost if AutoPay is canceled or if a payment fails.
 
 ### AutoPay Failure
 
@@ -62,7 +66,7 @@ Automated reminders are sent 7 days before the due date, on the due date, and 7 
 
 ### Late Fees
 
-A late fee of 1.5% of the outstanding balance is charged if payment is not received by the due date. The late fee is capped at $25 per billing cycle. Late fees are waived for customers enrolled in AutoPay who experience a system error.
+A late fee of 1.5% of the outstanding balance is charged if payment is not received by the due date. The late fee is capped at ₹199 per billing cycle. Late fees are waived for customers enrolled in AutoPay who experience a system error.
 
 ### Service Suspension
 

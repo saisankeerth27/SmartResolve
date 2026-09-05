@@ -36,11 +36,11 @@ Speed restrictions are removed at the start of the next billing cycle. No action
 
 ### Pay-Per-Use Overage
 
-Customers on plans with data limits can opt for pay-per-use overage. Overage is charged at $10 per additional GB. Overage charges are capped at $50 per billing cycle. The cap does not include the base plan charge.
+Customers on plans with data limits can opt for pay-per-use overage. Overage is charged at ₹99 per additional GB. Overage charges are capped at ₹499 per billing cycle. The cap does not include the base plan charge.
 
 ### Data Top-Up
 
-Customers can purchase additional high-speed data at any time. Data top-up is available in 1 GB increments. Each 1 GB top-up costs $10. Top-up data does not roll over to the next billing cycle.
+Customers can purchase additional high-speed data at any time. Data top-up is available in 1 GB increments. Each 1 GB top-up costs ₹99. Top-up data does not roll over to the next billing cycle.
 
 ## Data Usage Monitoring
 

@@ -7,6 +7,14 @@ SCHEMA_SQL = """
 PRAGMA journal_mode=WAL;
 PRAGMA foreign_keys=ON;
 
+CREATE TABLE IF NOT EXISTS telecom_providers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    code TEXT NOT NULL UNIQUE,
+    name TEXT NOT NULL,
+    display_name TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'inactive'))
+);
+
 CREATE TABLE IF NOT EXISTS customers (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     customer_number TEXT NOT NULL UNIQUE,
@@ -23,6 +31,7 @@ CREATE TABLE IF NOT EXISTS plans (
     plan_code TEXT NOT NULL UNIQUE,
     plan_name TEXT NOT NULL,
     plan_type TEXT NOT NULL,
+    provider_id INTEGER NOT NULL REFERENCES telecom_providers(id),
     monthly_price REAL NOT NULL,
     data_limit_gb INTEGER NOT NULL,
     voice_minutes INTEGER NOT NULL,
@@ -37,8 +46,10 @@ CREATE TABLE IF NOT EXISTS network_sites (
     site_code TEXT NOT NULL UNIQUE,
     site_name TEXT NOT NULL,
     technology TEXT NOT NULL CHECK (technology IN ('4G', '5G', 'LTE', 'Fiber')),
+    provider_id INTEGER NOT NULL REFERENCES telecom_providers(id),
     region TEXT NOT NULL,
     city TEXT NOT NULL,
+    state TEXT NOT NULL,
     latitude REAL NOT NULL,
     longitude REAL NOT NULL,
     capacity_percent INTEGER NOT NULL DEFAULT 0,
@@ -79,6 +90,7 @@ CREATE TABLE IF NOT EXISTS incidents (
     affected_service TEXT NOT NULL,
     severity TEXT NOT NULL CHECK (severity IN ('low', 'medium', 'high', 'critical')),
     region TEXT NOT NULL,
+    provider_id INTEGER NOT NULL REFERENCES telecom_providers(id),
     started_at TEXT NOT NULL,
     resolved_at TEXT,
     status TEXT NOT NULL DEFAULT 'investigating' CHECK (status IN ('investigating', 'identified', 'monitoring', 'resolved')),
@@ -121,6 +133,18 @@ CREATE TABLE IF NOT EXISTS customer_interactions (
     created_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS review_states (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ticket_id INTEGER NOT NULL REFERENCES tickets(id),
+    recommendation_category TEXT,
+    recommendation_action TEXT,
+    confidence TEXT,
+    reviewer_decision TEXT CHECK (reviewer_decision IN ('pending_review', 'approved', 'needs_information', 'escalation_requested', 'dismissed')),
+    reason TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS idx_customers_number ON customers(customer_number);
 CREATE INDEX IF NOT EXISTS idx_customers_status ON customers(status);
 CREATE INDEX IF NOT EXISTS idx_customers_segment ON customers(segment);
@@ -137,6 +161,10 @@ CREATE INDEX IF NOT EXISTS idx_tickets_priority ON tickets(priority);
 CREATE INDEX IF NOT EXISTS idx_tickets_category ON tickets(category);
 CREATE INDEX IF NOT EXISTS idx_ticket_events_ticket ON ticket_events(ticket_id);
 CREATE INDEX IF NOT EXISTS idx_interactions_customer ON customer_interactions(customer_id);
+CREATE INDEX IF NOT EXISTS idx_review_states_ticket ON review_states(ticket_id);
+CREATE INDEX IF NOT EXISTS idx_plans_provider ON plans(provider_id);
+CREATE INDEX IF NOT EXISTS idx_sites_provider ON network_sites(provider_id);
+CREATE INDEX IF NOT EXISTS idx_incidents_provider ON incidents(provider_id);
 """
 
 

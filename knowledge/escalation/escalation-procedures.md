@@ -8,15 +8,15 @@ This document defines when and how issues should be escalated to higher tiers of
 
 ### Tier 1: Frontline Support
 
-Handles standard customer inquiries and simple troubleshooting. Can resolve most issues on first contact. Escalates to Tier 2 if issue is not resolved within 15 minutes or requires specialized knowledge. Maximum authority for credits up to $25.
+Handles standard customer inquiries and simple troubleshooting. Can resolve most issues on first contact. Escalates to Tier 2 if issue is not resolved within 15 minutes or requires specialized knowledge. Maximum authority for credits up to ₹199.
 
 ### Tier 2: Technical Support
 
-Handles complex technical issues and advanced troubleshooting. Can access network diagnostic tools and deeper account information. Escalates to Tier 3 if issue requires network-side investigation or vendor coordination. Maximum authority for credits up to $100.
+Handles complex technical issues and advanced troubleshooting. Can access network diagnostic tools and deeper account information. Escalates to Tier 3 if issue requires network-side investigation or vendor coordination. Maximum authority for credits up to ₹999.
 
 ### Tier 3: Engineering and Specialists
 
-Handles network-level issues, vendor coordination, and complex billing disputes. Can make configuration changes on network equipment. Escalates to Tier 4 if issue requires vendor TAC support or architectural changes. Maximum authority for credits up to $500.
+Handles network-level issues, vendor coordination, and complex billing disputes. Can make configuration changes on network equipment. Escalates to Tier 4 if issue requires vendor TAC support or architectural changes. Maximum authority for credits up to ₹4,999.
 
 ### Tier 4: Vendor Support
 

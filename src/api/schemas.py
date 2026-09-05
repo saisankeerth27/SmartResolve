@@ -5,6 +5,8 @@ class HealthResponse(BaseModel):
     status: str
     service: str
     gemini_configured: bool
+    faiss_loaded: bool = False
+    faiss_vectors: int = 0
 
 
 class PaginationMeta(BaseModel):
@@ -481,3 +483,115 @@ class KnowledgeChunkListResponse(BaseModel):
     document_id: str
     chunks: list[KnowledgeChunk]
     total: int
+
+
+# ── AI Reasoning Schemas ────────────────────────────────
+
+class PossibleCauseSchema(BaseModel):
+    cause: str
+    evidence: list[str]
+
+
+class KnowledgeCitationSchema(BaseModel):
+    document_id: str
+    document_title: str
+    section: str
+
+
+class AIReasoningResultSchema(BaseModel):
+    status: str
+    summary: str
+    possible_causes: list[PossibleCauseSchema]
+    recommended_next_steps: list[str]
+    knowledge_citations: list[KnowledgeCitationSchema]
+    limitations: list[str]
+    confidence: str
+
+
+class RetrievalResultSchema(BaseModel):
+    chunk_id: str
+    document_id: str
+    document_title: str
+    section_heading: str
+    content: str
+    score: float
+
+
+class RetrievalInfoSchema(BaseModel):
+    status: str
+    query: str
+    results: list[RetrievalResultSchema]
+    total: int
+
+
+class CaseReasoningRequest(BaseModel):
+    question: str = "What is the most likely explanation for this case?"
+
+
+class CaseReasoningResponse(BaseModel):
+    case_id: str
+    retrieval: RetrievalInfoSchema
+    reasoning: AIReasoningResultSchema
+
+
+# ── Resolution Decision Schemas ─────────────────────────
+
+class ResolutionRecommendation(BaseModel):
+    category: str
+    action: str
+
+
+class ResolutionEvidence(BaseModel):
+    type: str
+    source: str
+    reference: str
+    statement: str
+
+
+class ResolutionKnowledgeSource(BaseModel):
+    document_id: str
+    section: str
+
+
+class ResolutionAIAssessment(BaseModel):
+    summary: str | None = None
+    confidence: str | None = None
+    status: str | None = None
+
+
+class ResolutionDecision(BaseModel):
+    case_id: str
+    decision_status: str
+    primary_recommendation: ResolutionRecommendation
+    alternative_actions: list[ResolutionRecommendation]
+    deterministic_findings: list[str]
+    ai_assessment: ResolutionAIAssessment | None = None
+    evidence: list[ResolutionEvidence]
+    knowledge_sources: list[ResolutionKnowledgeSource]
+    confidence: str
+    confidence_reasons: list[str]
+    limitations: list[str]
+    conflicts: list[str]
+    requires_human_review: bool
+    review_reasons: list[str] = []
+
+
+class CaseResolveRequest(BaseModel):
+    question: str | None = "What is the recommended next action for this case?"
+
+
+class ReviewStateCreate(BaseModel):
+    decision: str
+    reason: str | None = ""
+
+
+class ReviewStateResponse(BaseModel):
+    id: int
+    ticket_id: int
+    recommendation_category: str | None
+    recommendation_action: str | None
+    confidence: str | None
+    reviewer_decision: str | None
+    reason: str | None
+    created_at: str
+    updated_at: str
