@@ -106,7 +106,7 @@ CREATE TABLE IF NOT EXISTS tickets (
     priority TEXT NOT NULL DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high', 'critical')),
     subject TEXT NOT NULL,
     description TEXT NOT NULL,
-    status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'in_progress', 'pending_customer', 'resolved', 'escalated')),
+    status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'in_progress', 'pending_customer', 'resolved', 'escalated', 'analyzing', 'needs_information', 'pending_agent_approval', 'escalation_requested', 'human_review', 'approved', 'dismissed', 'new')),
     channel TEXT NOT NULL CHECK (channel IN ('web', 'mobile_app', 'call_center', 'email', 'store')),
     assigned_team TEXT,
     created_at TEXT NOT NULL,
@@ -145,6 +145,50 @@ CREATE TABLE IF NOT EXISTS review_states (
     updated_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS case_state_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ticket_id INTEGER NOT NULL REFERENCES tickets(id),
+    from_state TEXT NOT NULL,
+    to_state TEXT NOT NULL,
+    actor TEXT NOT NULL DEFAULT 'system',
+    reason TEXT,
+    created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS clarification_requests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ticket_id INTEGER NOT NULL REFERENCES tickets(id),
+    question TEXT NOT NULL,
+    missing_field TEXT NOT NULL,
+    reason TEXT,
+    turn_number INTEGER NOT NULL DEFAULT 1,
+    answer TEXT,
+    asked_at TEXT NOT NULL,
+    answered_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS escalation_records (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ticket_id INTEGER NOT NULL REFERENCES tickets(id),
+    escalation_queue TEXT NOT NULL,
+    severity TEXT NOT NULL CHECK (severity IN ('low', 'medium', 'high', 'critical')),
+    escalation_reasons TEXT,
+    handover_summary TEXT,
+    status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'in_progress', 'resolved', 'closed')),
+    assigned_to TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS audit_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ticket_id INTEGER NOT NULL REFERENCES tickets(id),
+    event_type TEXT NOT NULL,
+    details TEXT,
+    actor TEXT NOT NULL DEFAULT 'system',
+    created_at TEXT NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS idx_customers_number ON customers(customer_number);
 CREATE INDEX IF NOT EXISTS idx_customers_status ON customers(status);
 CREATE INDEX IF NOT EXISTS idx_customers_segment ON customers(segment);
@@ -165,6 +209,12 @@ CREATE INDEX IF NOT EXISTS idx_review_states_ticket ON review_states(ticket_id);
 CREATE INDEX IF NOT EXISTS idx_plans_provider ON plans(provider_id);
 CREATE INDEX IF NOT EXISTS idx_sites_provider ON network_sites(provider_id);
 CREATE INDEX IF NOT EXISTS idx_incidents_provider ON incidents(provider_id);
+CREATE INDEX IF NOT EXISTS idx_state_history_ticket ON case_state_history(ticket_id);
+CREATE INDEX IF NOT EXISTS idx_clarification_ticket ON clarification_requests(ticket_id);
+CREATE INDEX IF NOT EXISTS idx_escalation_ticket ON escalation_records(ticket_id);
+CREATE INDEX IF NOT EXISTS idx_escalation_status ON escalation_records(status);
+CREATE INDEX IF NOT EXISTS idx_audit_ticket ON audit_events(ticket_id);
+CREATE INDEX IF NOT EXISTS idx_audit_event_type ON audit_events(event_type);
 """
 
 
