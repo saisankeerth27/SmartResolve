@@ -106,12 +106,13 @@ CREATE TABLE IF NOT EXISTS tickets (
     priority TEXT NOT NULL DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high', 'critical')),
     subject TEXT NOT NULL,
     description TEXT NOT NULL,
-    status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'in_progress', 'pending_customer', 'resolved', 'escalated', 'analyzing', 'needs_information', 'pending_agent_approval', 'escalation_requested', 'human_review', 'approved', 'dismissed', 'new')),
+    status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'in_progress', 'pending_customer', 'resolved', 'escalated', 'closed', 'analyzing', 'needs_information', 'pending_agent_approval', 'escalation_requested', 'human_review', 'approved', 'dismissed', 'new')),
     channel TEXT NOT NULL CHECK (channel IN ('web', 'mobile_app', 'call_center', 'email', 'store')),
     assigned_team TEXT,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL,
     resolved_at TEXT
+    ,archived INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS ticket_events (
@@ -189,6 +190,21 @@ CREATE TABLE IF NOT EXISTS audit_events (
     created_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS internal_notes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ticket_id INTEGER NOT NULL REFERENCES tickets(id),
+    note TEXT NOT NULL,
+    author TEXT NOT NULL DEFAULT 'agent',
+    created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS resolution_drafts (
+    ticket_id INTEGER PRIMARY KEY REFERENCES tickets(id),
+    draft TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    updated_by TEXT NOT NULL DEFAULT 'agent'
+);
+
 CREATE TABLE IF NOT EXISTS conversations (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     ticket_id INTEGER NOT NULL REFERENCES tickets(id),
@@ -205,6 +221,22 @@ CREATE TABLE IF NOT EXISTS conversation_messages (
     content TEXT NOT NULL,
     mode TEXT CHECK (mode IN ('A', 'B', 'C')),
     created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS case_analysis_results (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ticket_id INTEGER NOT NULL REFERENCES tickets(id),
+    mode TEXT NOT NULL CHECK (mode IN ('A', 'B', 'C')),
+    classification_json TEXT NOT NULL,
+    draft_json TEXT,
+    clarification_json TEXT,
+    handover_json TEXT,
+    conflicts_json TEXT,
+    retrieval_info_json TEXT,
+    errors_json TEXT,
+    state_transition_json TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_customers_number ON customers(customer_number);
@@ -236,6 +268,7 @@ CREATE INDEX IF NOT EXISTS idx_audit_event_type ON audit_events(event_type);
 CREATE INDEX IF NOT EXISTS idx_conversations_ticket ON conversations(ticket_id);
 CREATE INDEX IF NOT EXISTS idx_conversations_customer ON conversations(customer_id);
 CREATE INDEX IF NOT EXISTS idx_conv_messages_conversation ON conversation_messages(conversation_id);
+CREATE INDEX IF NOT EXISTS idx_case_analysis_ticket ON case_analysis_results(ticket_id);
 """
 
 

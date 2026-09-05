@@ -14,6 +14,45 @@ from src.config import (
 )
 
 
+def answer_satisfies_field(field: str, answer: str) -> bool:
+    """Reject acknowledgements that do not provide the requested telecom fact."""
+    text = answer.strip().lower()
+    if not text:
+        return False
+    if field == "device":
+        return any(token in text for token in (
+            "phone", "mobile", "router", "modem", "laptop", "computer", "tablet",
+            "iphone", "android", "samsung", "pixel", "handset", "broadband",
+        )) or any(char.isdigit() for char in text) and len(text) > 2
+    if field == "scope":
+        return any(phrase in text for phrase in (
+            "all device", "every device", "one device", "single device", "just my",
+            "only my", "two device", "2 device", "multiple device", "specific device",
+        ))
+    if field == "timing":
+        return any(token in text for token in (
+            "today", "yesterday", "morning", "afternoon", "evening", "night", "hour",
+            "day", "week", "month", "since", "started", "constant", "intermittent",
+            "always", "sometimes", "occasionally", "come and go", "recently",
+        ))
+    if field == "location":
+        return len(text.split()) >= 2 or any(city in text for city in (
+            "bengaluru", "bangalore", "chennai", "mumbai", "delhi", "pune", "hyderabad",
+            "vijayawada", "kochi", "indiranagar", "area", "locality", "near",
+        ))
+    if field == "symptoms":
+        return len(text.split()) >= 3 and text not in {"yes", "no", "ok", "okay", "thanks"}
+    return len(text.split()) >= 2
+
+
+def get_latest_unanswered_field(conn, ticket_id: int) -> str | None:
+    row = conn.execute(
+        "SELECT missing_field FROM clarification_requests WHERE ticket_id = ? AND answer IS NULL ORDER BY id DESC LIMIT 1",
+        (ticket_id,),
+    ).fetchone()
+    return row[0] if row else None
+
+
 @dataclass
 class ClarificationRequest:
     question: str
@@ -38,6 +77,15 @@ def get_clarification_count(conn, ticket_id: int) -> int:
         (ticket_id,),
     )
     row = cursor.fetchone()
+    return row[0] if row else 0
+
+
+def get_field_attempt_count(conn, ticket_id: int, missing_field: str) -> int:
+    """Count clarification requests for one field, including unanswered retries."""
+    row = conn.execute(
+        "SELECT COUNT(*) FROM clarification_requests WHERE ticket_id = ? AND missing_field = ?",
+        (ticket_id, missing_field),
+    ).fetchone()
     return row[0] if row else 0
 
 
@@ -74,10 +122,13 @@ def record_clarification_answer(conn, ticket_id: int, missing_field: str, answer
 def select_next_question(
     missing_fields: list[str],
     previously_asked: list[str],
+    field_attempts: dict[str, int] | None = None,
 ) -> str | None:
-    """Select the single most important unasked question from missing fields."""
+    """Select the first missing field that has not reached the retry cap."""
     for field in missing_fields:
-        if field not in previously_asked:
+        if field_attempts is None and field in previously_asked:
+            continue
+        if (field_attempts or {}).get(field, 0) < 2:
             return field
     return None
 
@@ -110,7 +161,11 @@ def generate_clarification(
     if turn_count >= CLARIFICATION_MAX_TURNS:
         return None
 
-    next_field = select_next_question(missing_fields, previously_asked)
+    field_attempts = {
+        field: get_field_attempt_count(conn, ticket_id, field)
+        for field in missing_fields
+    }
+    next_field = select_next_question(missing_fields, previously_asked, field_attempts)
     if not next_field:
         return None
 
@@ -124,9 +179,11 @@ def generate_clarification(
         except Exception:
             question = None
 
-    # Fallback to deterministic question
+    # Fallback to deterministic question, with a distinct acknowledgement on retries.
     if not question:
         question = get_fallback_question(next_field)
+    if field_attempts.get(next_field, 0) > 0:
+        question = _rephrase_retry(next_field, question, field_attempts[next_field])
 
     reason = f"Required field '{next_field}' not yet confirmed from customer."
     new_turn = turn_count + 1
@@ -140,6 +197,18 @@ def generate_clarification(
         reason=reason,
         turn_number=new_turn,
     )
+
+
+def _rephrase_retry(field: str, question: str, attempt: int) -> str:
+    """Ensure a non-answer never produces the same assistant text twice."""
+    prefixes = {
+        "location": "I still need your location or area to check network status. ",
+        "timing": "Thanks. To narrow this down, I still need to know when it started. ",
+        "device": "Thanks. I still need the affected device or router model. ",
+        "scope": "Thanks. Is this affecting all devices or just one specific device? ",
+    }
+    prefix = prefixes.get(field, "I still need this detail to continue. ")
+    return prefix + question[0].lower() + question[1:]
 
 
 def _generate_with_gemini(

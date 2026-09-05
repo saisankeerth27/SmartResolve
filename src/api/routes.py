@@ -70,7 +70,7 @@ from src.services import knowledge_service
 from src.services.ai_reasoning_service import analyze_case
 from src.services.resolution_service import resolve_case
 from src.services.analysis_service import analyze_ticket
-from src.tickets import transition_case, get_current_state, get_state_history, InvalidTransitionError
+from src.tickets import transition_case, get_current_state, get_state_history, validate_transition, InvalidTransitionError
 from src.clarify import record_clarification_answer, get_clarification_count
 from src.audit import get_audit_trail, record_event
 from src.escalate import build_handover
@@ -393,6 +393,7 @@ async def list_tickets(
     search: str | None = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
+    archived: bool = Query(False),
 ) -> TicketListResponse:
     conn = get_connection()
     try:
@@ -401,6 +402,7 @@ async def list_tickets(
             status=status, priority=priority, category=category,
             customer_id=customer_id, search=search,
             page=page, page_size=page_size,
+            archived=archived,
         )
         return TicketListResponse(
             data=[TicketResponse(**d) for d in data],
@@ -756,6 +758,26 @@ async def analyze_case_endpoint(ticket_id: int):
         conn.close()
 
 
+@router.get("/cases/{ticket_id}/last-analysis")
+async def get_case_last_analysis(ticket_id: int):
+    """Get the most recent analysis result for a case."""
+    conn = get_connection()
+    try:
+        repo = TicketRepository(conn)
+        ticket = repo.get_by_id(ticket_id)
+        if not ticket:
+            raise HTTPException(status_code=404, detail="Ticket not found")
+
+        from src.services.analysis_service import get_last_analysis
+        last_analysis = get_last_analysis(conn, ticket_id)
+        if not last_analysis:
+            raise HTTPException(status_code=404, detail="No prior analysis found for this case")
+
+        return last_analysis
+    finally:
+        conn.close()
+
+
 # ── Clarification ───────────────────────────────────────
 
 @router.post("/cases/{ticket_id}/clarify")
@@ -803,6 +825,146 @@ async def submit_clarification_answer(ticket_id: int, body: dict):
                 "turn_number": result.clarification.turn_number,
             } if result.clarification else None,
         }
+    finally:
+        conn.close()
+
+
+# ── Ticket Management ───────────────────────────────────
+
+@router.patch("/tickets/{ticket_id}")
+async def update_ticket(ticket_id: int, body: dict):
+    """Apply human ticket edits and record each change in the audit trail."""
+    conn = get_connection()
+    try:
+        ticket = TicketRepository(conn).get_by_id(ticket_id)
+        if not ticket:
+            raise HTTPException(status_code=404, detail="Ticket not found")
+        categories = {"network", "billing", "connectivity", "voice", "sms", "roaming", "device", "account"}
+        priorities = {"low", "medium", "high", "critical"}
+        changes = {}
+        for key, allowed in (("category", categories), ("priority", priorities)):
+            if key in body:
+                if body[key] not in allowed:
+                    raise HTTPException(status_code=400, detail=f"Invalid {key}")
+                changes[key] = body[key]
+        if "assigned_team" in body:
+            changes["assigned_team"] = body["assigned_team"] or None
+        if not changes and not body.get("resolution_draft"):
+            raise HTTPException(status_code=400, detail="No editable fields supplied")
+        now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
+        if changes:
+            sets = ", ".join(f"{key} = ?" for key in changes)
+            conn.execute(f"UPDATE tickets SET {sets}, updated_at = ? WHERE id = ?", [*changes.values(), now, ticket_id])
+            record_event(conn, ticket_id, "ticket_updated", {"changes": changes}, "agent")
+        if body.get("resolution_draft"):
+            conn.execute(
+                "INSERT INTO resolution_drafts (ticket_id, draft, updated_at, updated_by) VALUES (?, ?, ?, 'agent') "
+                "ON CONFLICT(ticket_id) DO UPDATE SET draft = excluded.draft, updated_at = excluded.updated_at, updated_by = excluded.updated_by",
+                (ticket_id, body["resolution_draft"], now),
+            )
+            record_event(conn, ticket_id, "resolution_draft_edited", {"draft": body["resolution_draft"]}, "agent")
+        conn.commit()
+        return {"success": True, "ticket": TicketRepository(conn).get_by_id(ticket_id)}
+    finally:
+        conn.close()
+
+
+@router.post("/tickets/{ticket_id}/status")
+async def update_ticket_status(ticket_id: int, body: dict):
+    conn = get_connection()
+    try:
+        if not TicketRepository(conn).get_by_id(ticket_id):
+            raise HTTPException(status_code=404, detail="Ticket not found")
+        target = body.get("status")
+        if not target:
+            raise HTTPException(status_code=400, detail="status is required")
+        current = get_current_state(conn, ticket_id)
+        reason = body.get("reason", "Manual status update")
+        if validate_transition(current, target):
+            transition = transition_case(conn, ticket_id, current, target, "agent", reason)
+        else:
+            raise HTTPException(status_code=400, detail=f"Invalid transition: {current} -> {target}")
+        return {"success": True, "new_status": target, "transition": transition}
+    except (InvalidTransitionError, ValueError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    finally:
+        conn.close()
+
+
+@router.post("/tickets/{ticket_id}/archive")
+async def archive_ticket(ticket_id: int, body: dict | None = None):
+    conn = get_connection()
+    try:
+        if not TicketRepository(conn).get_by_id(ticket_id):
+            raise HTTPException(status_code=404, detail="Ticket not found")
+        now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
+        conn.execute("UPDATE tickets SET archived = 1, updated_at = ? WHERE id = ?", (now, ticket_id))
+        record_event(conn, ticket_id, "ticket_archived", {"reason": (body or {}).get("reason", "Archived by agent")}, "agent")
+        conn.commit()
+        return {"success": True, "archived": True}
+    finally:
+        conn.close()
+
+
+@router.post("/tickets/{ticket_id}/restore")
+async def restore_ticket(ticket_id: int):
+    conn = get_connection()
+    try:
+        if not TicketRepository(conn).get_by_id(ticket_id):
+            raise HTTPException(status_code=404, detail="Ticket not found")
+        now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
+        conn.execute("UPDATE tickets SET archived = 0, updated_at = ? WHERE id = ?", (now, ticket_id))
+        record_event(conn, ticket_id, "ticket_restored", {}, "agent")
+        conn.commit()
+        return {"success": True, "archived": False}
+    finally:
+        conn.close()
+
+
+@router.post("/tickets/{ticket_id}/notes")
+async def add_internal_note(ticket_id: int, body: dict):
+    conn = get_connection()
+    try:
+        if not TicketRepository(conn).get_by_id(ticket_id):
+            raise HTTPException(status_code=404, detail="Ticket not found")
+        note = (body.get("note") or "").strip()
+        if not note:
+            raise HTTPException(status_code=400, detail="note is required")
+        now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
+        conn.execute("INSERT INTO internal_notes (ticket_id, note, author, created_at) VALUES (?, ?, ?, ?)", (ticket_id, note, body.get("author", "agent"), now))
+        record_event(conn, ticket_id, "internal_note_added", {"note": note}, "agent")
+        conn.commit()
+        return {"success": True, "note": note, "created_at": now}
+    finally:
+        conn.close()
+
+
+@router.get("/tickets/{ticket_id}/notes")
+async def get_internal_notes(ticket_id: int):
+    conn = get_connection()
+    try:
+        if not TicketRepository(conn).get_by_id(ticket_id):
+            raise HTTPException(status_code=404, detail="Ticket not found")
+        rows = conn.execute(
+            "SELECT id, note, author, created_at FROM internal_notes WHERE ticket_id = ? ORDER BY id ASC",
+            (ticket_id,),
+        ).fetchall()
+        return {"notes": [dict(row) for row in rows]}
+    finally:
+        conn.close()
+
+
+@router.get("/tickets/{ticket_id}/resolution-draft")
+async def get_resolution_draft(ticket_id: int):
+    conn = get_connection()
+    try:
+        if not TicketRepository(conn).get_by_id(ticket_id):
+            raise HTTPException(status_code=404, detail="Ticket not found")
+        row = conn.execute(
+            "SELECT draft, updated_at, updated_by FROM resolution_drafts WHERE ticket_id = ?",
+            (ticket_id,),
+        ).fetchone()
+        return {"draft": dict(row) if row else None}
     finally:
         conn.close()
 
@@ -887,7 +1049,7 @@ async def dismiss_recommendation(ticket_id: int, body: dict | None = None):
 
 @router.post("/cases/{ticket_id}/escalate")
 async def escalate_case(ticket_id: int, body: dict | None = None):
-    """Agent escalates a case to human review. Transitions through escalation_requested → human_review."""
+    """Agent escalates a case to human review. Transitions through escalation_requested -> human_review."""
     conn = get_connection()
     try:
         repo = TicketRepository(conn)
@@ -899,31 +1061,34 @@ async def escalate_case(ticket_id: int, body: dict | None = None):
         reason = (body or {}).get("reason", "Manual escalation by agent")
         queue = (body or {}).get("queue", "Technical Support - L1")
 
-        if current not in ("pending_agent_approval", "analyzing", "needs_information", "human_review", "escalation_requested"):
+        if current in ("escalation_requested", "human_review"):
+            from src.audit import record_escalation
+            record_escalation(conn, ticket_id, queue, [reason])
+            conn.commit()
+            return {
+                "success": True,
+                "case_id": ticket_id,
+                "new_status": current,
+                "transition": None,
+                "message": f"Case already escalated to {queue}.",
+                "state_history": get_state_history(conn, ticket_id),
+            }
+
+        if current not in ("pending_agent_approval", "analyzing", "needs_information", "open", "new"):
             raise HTTPException(status_code=400, detail=f"Cannot escalate: case is in '{current}' state.")
 
-        # Transition to escalation_requested first (skip if already there)
-        transition = None
-        if current != "escalation_requested":
-            transition = transition_case(conn, ticket_id, current, "escalation_requested", "agent", reason)
-
-        # Then immediately to human_review
-        try:
-            transition = transition_case(conn, ticket_id, "escalation_requested", "human_review", "agent", f"Escalated to {queue}: {reason}")
-        except (InvalidTransitionError, ValueError):
-            pass  # Already at human_review is fine
+        transition = transition_case(conn, ticket_id, current, "escalation_requested", "agent", reason)
+        transition_case(conn, ticket_id, "escalation_requested", "human_review", "agent", f"Escalated to {queue}: {reason}")
 
         from src.audit import record_escalation
         record_escalation(conn, ticket_id, queue, [reason])
 
-        # Store escalation record
-        from src.escalate import build_handover
+        from src.escalate import build_handover, store_escalation
         investigation = get_case_investigation(conn, ticket_id)
         if investigation:
             from src.classify import ClassificationResult
             temp_class = ClassificationResult(mode="C", reason_codes=[reason], escalation_queue=queue)
             handover = build_handover(investigation, temp_class, {"total": 0, "average_score": 0.0, "chunks": []})
-            from src.escalate import store_escalation
             store_escalation(conn, ticket_id, handover)
 
         new_state = get_current_state(conn, ticket_id)
@@ -1189,6 +1354,26 @@ async def get_support_queue(
 
 # ── Customer Chat ──────────────────────────────────────
 
+@router.post("/chat/start-conversation")
+async def chat_start_conversation(body: dict):
+    """Start a fresh customer conversation without sending a message."""
+    customer_id = body.get("customer_id")
+    if not customer_id:
+        raise HTTPException(status_code=400, detail="customer_id is required")
+
+    from src.chat import create_new_conversation
+    conv = create_new_conversation(customer_id)
+    return {
+        "conversation_id": conv.id,
+        "ticket_id": conv.ticket_id,
+        "ticket_number": conv.ticket_number,
+        "customer_id": conv.customer_id,
+        "customer_name": conv.customer_name,
+        "subject": conv.subject,
+        "status": conv.status,
+    }
+
+
 @router.post("/chat/send")
 async def chat_send(body: dict):
     """Process a customer message through Mode A/B/C pipeline."""
@@ -1196,12 +1381,23 @@ async def chat_send(body: dict):
     conversation_id = body.get("conversation_id")
     content = body.get("content", "").strip()
 
-    if not customer_id:
-        raise HTTPException(status_code=400, detail="customer_id is required")
     if not content:
         raise HTTPException(status_code=400, detail="content is required")
 
     from src.chat import get_or_create_conversation, send_customer_message
+
+    if conversation_id and not customer_id:
+        conn = get_connection()
+        try:
+            row = conn.execute("SELECT customer_id FROM conversations WHERE id = ?", (conversation_id,)).fetchone()
+            if not row:
+                raise HTTPException(status_code=404, detail="Conversation not found")
+            customer_id = row[0]
+        finally:
+            conn.close()
+
+    if not customer_id:
+        raise HTTPException(status_code=400, detail="customer_id is required")
 
     if not conversation_id:
         conv = get_or_create_conversation(customer_id)

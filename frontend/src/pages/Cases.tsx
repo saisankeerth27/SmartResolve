@@ -16,6 +16,7 @@ type CaseTicket = {
   customer_name: string
   customer_number: string
   customer_phone: string | null
+  archived: boolean
 }
 
 type TicketListResponse = {
@@ -51,6 +52,7 @@ export function CasesPage() {
   const [status, setStatus] = useState('')
   const [priority, setPriority] = useState('')
   const [category, setCategory] = useState('')
+  const [archived, setArchived] = useState(false)
   const [page, setPage] = useState(1)
   const [data, setData] = useState<TicketListResponse | null>(null)
   const [loading, setLoading] = useState(true)
@@ -67,6 +69,7 @@ export function CasesPage() {
       if (status) params.set('status', status)
       if (priority) params.set('priority', priority)
       if (category) params.set('category', category)
+      params.set('archived', String(archived))
       const result = await fetchApi<TicketListResponse>(`/api/tickets?${params.toString()}`)
       setData(result)
     } catch (err) {
@@ -74,7 +77,17 @@ export function CasesPage() {
     } finally {
       setLoading(false)
     }
-  }, [page, search, status, priority, category])
+  }, [page, search, status, priority, category, archived])
+
+  const updateTicket = async (ticketId: number, path: string, body: Record<string, unknown> = {}) => {
+    const response = await fetch(`/api/tickets/${ticketId}${path}`, {
+      method: path === '' ? 'PATCH' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+    if (!response.ok) throw new Error((await response.json()).detail || 'Ticket update failed')
+    await fetchData()
+  }
 
   useEffect(() => {
     fetchData()
@@ -85,10 +98,11 @@ export function CasesPage() {
     setStatus('')
     setPriority('')
     setCategory('')
+    setArchived(false)
     setPage(1)
   }
 
-  const hasFilters = search || status || priority || category
+  const hasFilters = search || status || priority || category || archived
 
   return (
     <div className="space-y-4">
@@ -119,7 +133,9 @@ export function CasesPage() {
           className="px-3 py-2 text-sm border border-surface-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-brand-500"
         >
           <option value="">All Statuses</option>
-          <option value="open">Open</option>
+          <option value="open">New / Open</option>
+          <option value="in_progress">In Progress</option>
+          <option value="pending_customer">Pending Customer</option>
           <option value="analyzing">Analyzing</option>
           <option value="pending_agent_approval">Pending Approval</option>
           <option value="needs_information">Needs Information</option>
@@ -127,8 +143,16 @@ export function CasesPage() {
           <option value="human_review">Human Review</option>
           <option value="approved">Approved</option>
           <option value="resolved">Resolved</option>
+          <option value="closed">Closed</option>
+          <option value="escalated">Escalated</option>
           <option value="dismissed">Dismissed</option>
         </select>
+        <button
+          onClick={() => { setArchived(value => !value); setPage(1) }}
+          className={`px-3 py-2 text-sm border rounded-lg ${archived ? 'border-brand-300 bg-brand-50 text-brand-700' : 'border-surface-200 bg-white text-surface-700'}`}
+        >
+          {archived ? 'Archived' : 'Active'}
+        </button>
         <select
           value={priority}
           onChange={(e) => { setPriority(e.target.value); setPage(1) }}
@@ -236,6 +260,26 @@ export function CasesPage() {
                           >
                             Investigate
                           </button>
+                          <select
+                            value={ticket.status}
+                            onChange={async (event) => {
+                              event.stopPropagation()
+                              try { await updateTicket(ticket.id, '/status', { status: event.target.value, reason: 'Updated from Cases list' }) } catch (err) { setError(err instanceof Error ? err.message : 'Status update failed') }
+                            }}
+                            onClick={event => event.stopPropagation()}
+                            className="ml-2 px-2 py-1.5 text-[11px] border border-surface-200 rounded-lg bg-white"
+                          >
+                            {['open', 'in_progress', 'needs_information', 'pending_customer', 'resolved', 'escalated', 'closed'].map(value => <option key={value} value={value}>{value.replace(/_/g, ' ')}</option>)}
+                          </select>
+                          <button
+                            onClick={async (event) => {
+                              event.stopPropagation()
+                              try { await updateTicket(ticket.id, archived ? '/restore' : '/archive') } catch (err) { setError(err instanceof Error ? err.message : 'Archive update failed') }
+                            }}
+                            className="ml-2 px-2 py-1.5 text-[11px] font-medium text-surface-600 bg-surface-100 rounded-lg hover:bg-surface-200"
+                          >
+                            {archived ? 'Restore' : 'Archive'}
+                          </button>
                         </td>
                       </tr>
                     ))}
@@ -277,6 +321,23 @@ export function CasesPage() {
                     <span className="capitalize">{ticket.category}</span>
                     <span>{ticket.assigned_team || 'Unassigned'}</span>
                     <span>{formatTimeAgo(ticket.created_at)}</span>
+                  </div>
+                  <div className="flex items-center gap-2 mt-3" onClick={event => event.stopPropagation()}>
+                    <select
+                      value={ticket.status}
+                      onChange={async event => {
+                        try { await updateTicket(ticket.id, '/status', { status: event.target.value, reason: 'Updated from Cases list' }) } catch (err) { setError(err instanceof Error ? err.message : 'Status update failed') }
+                      }}
+                      className="flex-1 px-2 py-1.5 text-[11px] border border-surface-200 rounded-lg bg-white"
+                    >
+                      {['open', 'in_progress', 'needs_information', 'pending_customer', 'resolved', 'escalated', 'closed'].map(value => <option key={value} value={value}>{value.replace(/_/g, ' ')}</option>)}
+                    </select>
+                    <button
+                      onClick={async () => {
+                        try { await updateTicket(ticket.id, archived ? '/restore' : '/archive') } catch (err) { setError(err instanceof Error ? err.message : 'Archive update failed') }
+                      }}
+                      className="px-2.5 py-1.5 text-[11px] font-medium text-surface-600 bg-surface-100 rounded-lg"
+                    >{archived ? 'Restore' : 'Archive'}</button>
                   </div>
                 </div>
               ))

@@ -352,8 +352,8 @@ def _insert_subscriptions(cursor: sqlite3.Cursor, customer_ids: list[int], plan_
     statuses = (["active"] * 55 + ["suspended"] * 5 + ["cancelled"] * 3)[:63]
     ids = []
     service_counter = 10001
-    for i in range(63):
-        customer_id = rng.choice(customer_ids)
+    assigned_customer_ids = customer_ids + [rng.choice(customer_ids) for _ in range(8)]
+    for i, customer_id in enumerate(assigned_customer_ids):
         plan_id = rng.choice(plan_ids)
         site_id = rng.choice(site_ids)
         stype = service_types[i] if i < len(service_types) else "mobile"
@@ -431,7 +431,11 @@ def _insert_tickets(cursor: sqlite3.Cursor, customer_ids: list[int], subscriptio
     ticket_counter = 300001
     for i in range(110):
         customer_id = rng.choice(customer_ids)
-        subscription_id = rng.choice(subscription_ids)
+        customer_subscription = cursor.execute(
+            "SELECT id FROM subscriptions WHERE customer_id = ? ORDER BY id",
+            (customer_id,),
+        ).fetchall()
+        subscription_id = rng.choice(customer_subscription)[0] if customer_subscription else None
         template = rng.choice(TICKET_TEMPLATES)
         category, priority, subject, description = template
         number = f"TKT-{ticket_counter}"

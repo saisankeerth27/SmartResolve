@@ -39,6 +39,43 @@ class ClassificationResult:
     eligible_for_draft: bool = False
 
 
+# Categories that a front-line telecom agent resolves through normal troubleshooting.
+# History, incident, network and account-flag rules do not auto-escalate these; they
+# instead fall through to Mode B (gather details) or Mode A (grounded draft).
+ROUTINE_CATEGORIES = (
+    "connectivity", "network", "voice", "sms", "billing", "device", "roaming",
+)
+
+# Risk/infrastructure flags that are genuinely critical even on routine categories.
+NON_ROUTINE_SEVERITIES = ("critical", "high")
+
+
+def is_routine_category(context: dict) -> bool:
+    category = (context.get("ticket", {}) or {}).get("category", "").lower()
+    return category in ROUTINE_CATEGORIES
+
+
+def defer_routine_to_triage(context, already_asked, result) -> bool:
+    """For routine categories, suppress escalation and let Mode B/A handle it.
+
+    Returns True if the routine case was handled here (caller returns `result`).
+    """
+    if not is_routine_category(context):
+        return False
+    missing = detect_missing_information(context, already_asked)
+    result.reason_codes.append("ROUTINE: History/incident flag present but category is routine — proceeding with troubleshooting.")
+    if missing and len(already_asked or []) < CLARIFICATION_MAX_TURNS:
+        result.mode = "B"
+        result.required_information = missing
+        result.missing_fields = missing
+        result.confidence = 0.4
+        return True
+    result.mode = "A"
+    result.eligible_for_draft = True
+    result.confidence = 0.4
+    return True
+
+
 # ── Individual check functions ────────────────────────
 
 def check_data_integrity(context: dict) -> tuple[bool, str | None]:
@@ -134,6 +171,20 @@ def check_repeat_complaint(context: dict) -> tuple[bool, str | None]:
     return False, None
 
 
+def has_identifiable_issue(context: dict) -> bool:
+    """A greeting or acknowledgement cannot establish a repeat complaint category."""
+    ticket = context.get("ticket", {})
+    description = f"{ticket.get('subject', '')} {ticket.get('description', '')}".lower()
+    return any(
+        keyword in description
+        for keyword in (
+            "wifi", "wi-fi", "broadband", "internet", "slow", "speed", "outage",
+            "coverage", "call", "sms", "bill", "charge", "roaming", "router",
+            "sim", "device", "network", "connection", "disconnect", "drop", "drops", "dropping", "signal",
+        )
+    )
+
+
 def check_enterprise_case(context: dict) -> tuple[bool, str | None]:
     """Check for enterprise/high-impact cases."""
     customer = context.get("customer", {})
@@ -201,15 +252,34 @@ def detect_missing_information(context: dict, already_asked: list[str] | None = 
     investigation = context.get("investigation", {})
     known_facts = investigation.get("known_facts", [])
     known_text = " ".join(known_facts).lower()
+    customer_text = f"{ticket.get('subject', '')} {ticket.get('description', '')}".lower()
+
+    # Any field a customer has already answered is treated as satisfied.
+    # The investigation carries these as "Customer confirmed {field}: ...".
+    confirmed_fields = {
+        m.group(1)
+        for m in re.finditer(r"customer confirmed\s+([a-z_]+):", known_text)
+    }
 
     if category in ("network", "connectivity"):
-        if "location" not in known_text and "area" not in known_text and "city" not in known_text:
+        has_location = (
+            "location" in known_text or "area" in known_text or "city" in known_text
+            or re.search(r"\b(?:in|at|near)\s+[a-z][a-z -]{2,}", customer_text) is not None
+        )
+        if not has_location:
             missing.append("location")
-        if "time" not in known_text and "when" not in known_text:
+        if "time" not in known_text and "when" not in known_text and not re.search(
+            r"\b(?:since|started|yesterday|today|morning|evening|week|month|constant|intermittent)\b",
+            f"{customer_text} {known_text}",
+        ):
             missing.append("timing")
-        if "device" not in known_text and "router" not in known_text:
+        if "device" not in known_text and "router" not in known_text and not any(
+            word in customer_text for word in ("phone", "laptop", "computer", "handset", "modem")
+        ):
             missing.append("device")
-        if "all devices" not in known_text and "specific device" not in known_text:
+        if "all devices" not in known_text and "specific device" not in known_text and not re.search(
+            r"\b(?:all|one|single)\s+devices?\b", customer_text
+        ):
             missing.append("scope")
 
     elif category == "billing":
@@ -226,7 +296,18 @@ def detect_missing_information(context: dict, already_asked: list[str] | None = 
         if "device" not in known_text and "model" not in known_text:
             missing.append("device")
 
-    return [m for m in missing if m not in already_asked]
+    elif category in ("account", "roaming") or not category:
+        if "symptoms" not in already_asked:
+            missing.append("symptoms")
+
+    # If no missing info detected yet, check if message is a greeting or placeholder
+    if not missing:
+        greeting_words = ("hello", "hi", "hey", "help", "need help")
+        if any(w in description for w in greeting_words) or description in ("new conversation", "customer initiated chat"):
+            if "symptoms" not in already_asked:
+                missing.append("symptoms")
+
+    return [m for m in missing if m not in already_asked and m not in confirmed_fields]
 
 
 # ── Main classification function ──────────────────────
@@ -252,7 +333,21 @@ def classify_case(context: dict, already_asked: list[str] | None = None) -> Clas
     blocked, reason = check_data_integrity(context)
     if blocked:
         result.reason_codes.append(reason)
-        if "MISSING-CUSTOMER" in reason or "MISSING-SUBSCRIPTION" in reason:
+        if "MISSING-CUSTOMER" in reason:
+            result.escalation_required = True
+            result.escalation_queue = "Technical Support - L1"
+            result.blocking_reasons.append(reason)
+            return result
+        if "MISSING-SUBSCRIPTION" in reason:
+            ticket = context.get("ticket", {})
+            if ticket.get("channel") == "web":
+                missing = detect_missing_information(context, already_asked)
+                if missing:
+                    result.mode = "B"
+                    result.required_information = missing
+                    result.missing_fields = missing
+                    result.confidence = 0.4
+                    return result
             result.escalation_required = True
             result.escalation_queue = "Technical Support - L1"
             result.blocking_reasons.append(reason)
@@ -272,26 +367,61 @@ def classify_case(context: dict, already_asked: list[str] | None = None) -> Clas
         result.blocking_reasons.append(reason)
         return result
 
+    # An unclear message must establish an issue before any history or risk rule applies.
+    if not has_identifiable_issue(context):
+        missing = detect_missing_information(context, already_asked)
+        if missing:
+            result.mode = "B"
+            result.required_information = missing
+            result.missing_fields = missing
+            result.confidence = 0.3
+            result.reason_codes.append("MISSING-INFO: Customer has not stated an identifiable issue.")
+            return result
+
+    missing = detect_missing_information(context, already_asked)
+    clarification_attempts = context.get("clarification_attempts", {})
+    exhausted_field = next(
+        (field for field in missing if clarification_attempts.get(field, 0) >= 2),
+        None,
+    )
+    if exhausted_field:
+        result.reason_codes.append(
+            f"UNRESOLVED-AFTER-CLARIFICATION: {exhausted_field} was not confirmed after 2 attempts."
+        )
+        result.escalation_required = True
+        result.escalation_queue = "Human Review"
+        result.blocking_reasons.append(result.reason_codes[-1])
+        return result
+
     # 3. CONFLICTING EVIDENCE
     has_conflict, reason = check_conflicting_evidence(context)
     if has_conflict:
         result.reason_codes.append(reason)
-        result.escalation_required = True
-        result.escalation_queue = "Billing Operations - Investigation"
-        result.blocking_reasons.append(reason)
-        return result
+        if is_routine_category(context):
+            result.reason_codes.append(
+                "ROUTINE-NO-CONFLICT-ESCALATION: Conflicting evidence present but category is routine — investigating is correct, escalating is not."
+            )
+        else:
+            result.escalation_required = True
+            result.escalation_queue = "Billing Operations - Investigation"
+            result.blocking_reasons.append(reason)
+            return result
 
     # 4. ACTIVE MAJOR INCIDENT
     has_incident, reason = check_active_incident(context)
     if has_incident:
         result.reason_codes.append(reason)
-        result.escalation_required = True
-        result.escalation_queue = "Network Operations - Critical"
-        result.blocking_reasons.append(reason)
-        return result
+        if is_routine_category(context):
+            if defer_routine_to_triage(context, already_asked, result):
+                return result
+        else:
+            result.escalation_required = True
+            result.escalation_queue = "Network Operations - Critical"
+            result.blocking_reasons.append(reason)
+            return result
 
     # 5. REPEAT COMPLAINT
-    is_repeat, reason = check_repeat_complaint(context)
+    is_repeat, reason = check_repeat_complaint(context) if has_identifiable_issue(context) else (False, None)
     if is_repeat:
         result.reason_codes.append(reason)
         result.escalation_required = True
@@ -323,7 +453,6 @@ def classify_case(context: dict, already_asked: list[str] | None = None) -> Clas
     weak_retrieval, reason = check_retrieval_quality(context)
     if weak_retrieval:
         result.reason_codes.append(reason)
-        # Check if missing information can help
         missing = detect_missing_information(context, already_asked)
         if missing:
             result.mode = "B"
@@ -331,11 +460,19 @@ def classify_case(context: dict, already_asked: list[str] | None = None) -> Clas
             result.missing_fields = missing
             result.confidence = 0.3
             return result
-        else:
-            result.escalation_required = True
-            result.escalation_queue = "Technical Support - L1"
-            result.blocking_reasons.append(reason)
+        # Don't escalate routine troubleshootable issues just because retrieval is weak
+        category = context.get("ticket", {}).get("category", "").lower()
+        routine_categories = ("connectivity", "network", "voice", "sms", "billing", "device", "roaming")
+        if category in routine_categories:
+            result.mode = "A"
+            result.eligible_for_draft = True
+            result.confidence = 0.4
+            result.reason_codes.append("ROUTINE-NO-RETRIEVAL: Weak retrieval but case is routine — drafting with available context.")
             return result
+        result.escalation_required = True
+        result.escalation_queue = "Technical Support - L1"
+        result.blocking_reasons.append(reason)
+        return result
 
     # 9. ACCOUNT ELIGIBILITY
     ineligible, reason = check_account_eligibility(context)
@@ -355,6 +492,19 @@ def classify_case(context: dict, already_asked: list[str] | None = None) -> Clas
 
     # 10. MODE SELECTION — if we got here, check if info is sufficient
     missing = detect_missing_information(context, already_asked)
+    clarification_attempts = context.get("clarification_attempts", {})
+    exhausted_field = next(
+        (field for field in missing if clarification_attempts.get(field, 0) >= 2),
+        None,
+    )
+    if exhausted_field:
+        result.reason_codes.append(
+            f"UNRESOLVED-AFTER-CLARIFICATION: {exhausted_field} was not confirmed after 2 attempts."
+        )
+        result.escalation_required = True
+        result.escalation_queue = "Human Review"
+        result.blocking_reasons.append(result.reason_codes[-1])
+        return result
     if missing and len(already_asked or []) < CLARIFICATION_MAX_TURNS:
         result.mode = "B"
         result.required_information = missing

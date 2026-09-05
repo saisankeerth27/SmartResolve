@@ -9,7 +9,9 @@ This is the central service that:
 """
 from __future__ import annotations
 
+import json
 import logging
+from datetime import datetime, timezone
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -88,6 +90,20 @@ def analyze_ticket(
     ticket = investigation.get("ticket", {})
     ticket_number = ticket.get("ticket_number", str(ticket_id))
 
+    clarification_rows = conn.execute(
+        "SELECT missing_field, COUNT(*) FROM clarification_requests WHERE ticket_id = ? GROUP BY missing_field",
+        (ticket_id,),
+    ).fetchall()
+    clarification_attempts = {row[0]: row[1] for row in clarification_rows}
+    confirmed_answers = conn.execute(
+        "SELECT missing_field, answer FROM clarification_requests WHERE ticket_id = ? AND answer IS NOT NULL ORDER BY id",
+        (ticket_id,),
+    ).fetchall()
+    if confirmed_answers:
+        investigation.setdefault("investigation", {}).setdefault("known_facts", []).extend(
+            f"Customer confirmed {field}: {answer}" for field, answer in confirmed_answers
+        )
+
     # Run retrieval
     retrieval_chunks = []
     retrieval_info = {"total": 0, "average_score": 0.0, "chunks": []}
@@ -111,6 +127,7 @@ def analyze_ticket(
     # Add retrieval info to context for classification
     context = dict(investigation)
     context["retrieval"] = retrieval_info
+    context["clarification_attempts"] = clarification_attempts
 
     # Detect conflicts
     conflicts = detect_conflicts(context)
@@ -173,7 +190,204 @@ def analyze_ticket(
     elif classification.mode == "C":
         result.handover = _handle_mode_c(conn, ticket_id, classification, context, investigation, retrieval_info)
 
+    try:
+        save_analysis_result(conn, result)
+    except Exception as e:
+        logger.warning("Failed to save analysis result for ticket %s: %s", ticket_id, e)
+
     return result
+
+
+def _ensure_analysis_table(conn) -> None:
+    conn.execute(
+        """CREATE TABLE IF NOT EXISTS case_analysis_results (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ticket_id INTEGER NOT NULL REFERENCES tickets(id),
+            mode TEXT NOT NULL CHECK (mode IN ('A', 'B', 'C')),
+            classification_json TEXT NOT NULL,
+            draft_json TEXT,
+            clarification_json TEXT,
+            handover_json TEXT,
+            conflicts_json TEXT,
+            retrieval_info_json TEXT,
+            errors_json TEXT,
+            state_transition_json TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        )"""
+    )
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_case_analysis_ticket ON case_analysis_results(ticket_id)")
+
+
+def format_analysis_dict(result: AnalysisResult) -> dict:
+    """Format an AnalysisResult into a standard dictionary representation."""
+    return {
+        "ticket_id": result.ticket_id,
+        "ticket_number": result.ticket_number,
+        "mode": result.mode,
+        "classification": {
+            "mode": result.classification.mode,
+            "reason_codes": result.classification.reason_codes,
+            "confidence": result.classification.confidence,
+            "required_information": result.classification.required_information,
+            "escalation_required": result.classification.escalation_required,
+            "escalation_queue": result.classification.escalation_queue,
+            "missing_fields": result.classification.missing_fields,
+            "blocking_reasons": result.classification.blocking_reasons,
+            "eligible_for_draft": result.classification.eligible_for_draft,
+        },
+        "draft": {
+            "draft_response": result.draft.draft_response,
+            "reasoning_summary": result.draft.reasoning_summary,
+            "citations": [
+                {"document_id": c.document_id, "document_title": c.document_title, "section_heading": c.section_heading}
+                if hasattr(c, "document_id") else c
+                for c in (result.draft.citations or [])
+            ] if isinstance(result.draft.citations, list) else result.draft.citations,
+            "confidence": result.draft.confidence,
+            "limitations": result.draft.limitations,
+            "account_evidence": result.draft.account_evidence,
+            "operational_evidence": result.draft.operational_evidence,
+            "knowledge_evidence": result.draft.knowledge_evidence,
+        } if result.draft else None,
+        "clarification": {
+            "question": result.clarification.question,
+            "missing_field": result.clarification.missing_field,
+            "reason": result.clarification.reason,
+            "turn_number": result.clarification.turn_number,
+        } if result.clarification else None,
+        "handover": {
+            "case_id": result.handover.case_id,
+            "ticket_number": result.handover.ticket_number,
+            "customer_name": result.handover.customer_name,
+            "customer_segment": result.handover.customer_segment,
+            "customer_phone": result.handover.customer_phone,
+            "account_service": result.handover.account_service,
+            "plan_name": result.handover.plan_name,
+            "plan_type": result.handover.plan_type,
+            "operator": result.handover.operator,
+            "issue_summary": result.handover.issue_summary,
+            "original_message": result.handover.original_message,
+            "confirmed_facts": result.handover.confirmed_facts,
+            "missing_information": result.handover.missing_information,
+            "previous_tickets": result.handover.previous_tickets,
+            "previous_troubleshooting": result.handover.previous_troubleshooting,
+            "network_context": result.handover.network_context,
+            "retrieval_result": result.handover.retrieval_result,
+            "retrieval_confidence": result.handover.retrieval_confidence,
+            "escalation_reasons": result.handover.escalation_reasons,
+            "escalation_queue": result.handover.escalation_queue,
+            "severity": result.handover.severity,
+            "timestamp": result.handover.timestamp,
+            "current_status": result.handover.current_status,
+            "recommendations": result.handover.recommendations,
+            "evidence_summary": result.handover.evidence_summary,
+        } if result.handover else None,
+        "conflicts": [
+            {
+                "conflict_type": c.conflict_type if hasattr(c, "conflict_type") else (c.get("conflict_type") if isinstance(c, dict) else str(c)),
+                "source_a": c.source_a if hasattr(c, "source_a") else (c.get("source_a") if isinstance(c, dict) else ""),
+                "source_b": c.source_b if hasattr(c, "source_b") else (c.get("source_b") if isinstance(c, dict) else ""),
+                "description": c.description if hasattr(c, "description") else (c.get("description") if isinstance(c, dict) else ""),
+                "impact": c.impact if hasattr(c, "impact") else (c.get("impact") if isinstance(c, dict) else ""),
+                "human_action_required": c.human_action_required if hasattr(c, "human_action_required") else (c.get("human_action_required") if isinstance(c, dict) else ""),
+            }
+            for c in result.conflicts
+        ],
+        "retrieval_info": result.retrieval_info,
+        "errors": result.errors,
+        "state_transition": result.state_transition,
+    }
+
+
+def save_analysis_result(conn, result: AnalysisResult) -> None:
+    """Persist the full AnalysisResult to database."""
+    _ensure_analysis_table(conn)
+    now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
+    data = format_analysis_dict(result)
+
+    existing = conn.execute(
+        "SELECT id FROM case_analysis_results WHERE ticket_id = ?",
+        (result.ticket_id,),
+    ).fetchone()
+
+    if existing:
+        conn.execute(
+            """UPDATE case_analysis_results SET
+               mode = ?, classification_json = ?, draft_json = ?,
+               clarification_json = ?, handover_json = ?, conflicts_json = ?,
+               retrieval_info_json = ?, errors_json = ?, state_transition_json = ?,
+               updated_at = ?
+               WHERE id = ?""",
+            (
+                result.mode,
+                json.dumps(data["classification"]),
+                json.dumps(data["draft"]) if data["draft"] else None,
+                json.dumps(data["clarification"]) if data["clarification"] else None,
+                json.dumps(data["handover"]) if data["handover"] else None,
+                json.dumps(data["conflicts"]),
+                json.dumps(data["retrieval_info"]),
+                json.dumps(data["errors"]),
+                json.dumps(data["state_transition"]) if data["state_transition"] else None,
+                now,
+                existing[0],
+            ),
+        )
+    else:
+        conn.execute(
+            """INSERT INTO case_analysis_results
+               (ticket_id, mode, classification_json, draft_json, clarification_json,
+                handover_json, conflicts_json, retrieval_info_json, errors_json,
+                state_transition_json, created_at, updated_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (
+                result.ticket_id,
+                result.mode,
+                json.dumps(data["classification"]),
+                json.dumps(data["draft"]) if data["draft"] else None,
+                json.dumps(data["clarification"]) if data["clarification"] else None,
+                json.dumps(data["handover"]) if data["handover"] else None,
+                json.dumps(data["conflicts"]),
+                json.dumps(data["retrieval_info"]),
+                json.dumps(data["errors"]),
+                json.dumps(data["state_transition"]) if data["state_transition"] else None,
+                now,
+                now,
+            ),
+        )
+    conn.commit()
+
+
+def get_last_analysis(conn, ticket_id: int) -> dict | None:
+    """Retrieve the most recent analysis result for a ticket."""
+    _ensure_analysis_table(conn)
+    cursor = conn.execute(
+        """SELECT r.mode, r.classification_json, r.draft_json, r.clarification_json,
+                  r.handover_json, r.conflicts_json, r.retrieval_info_json,
+                  r.errors_json, r.state_transition_json, t.ticket_number
+           FROM case_analysis_results r
+           JOIN tickets t ON r.ticket_id = t.id
+           WHERE r.ticket_id = ?
+           ORDER BY r.updated_at DESC LIMIT 1""",
+        (ticket_id,),
+    )
+    row = cursor.fetchone()
+    if not row:
+        return None
+
+    return {
+        "ticket_id": ticket_id,
+        "ticket_number": row[9],
+        "mode": row[0],
+        "classification": json.loads(row[1]) if row[1] else {},
+        "draft": json.loads(row[2]) if row[2] else None,
+        "clarification": json.loads(row[3]) if row[3] else None,
+        "handover": json.loads(row[4]) if row[4] else None,
+        "conflicts": json.loads(row[5]) if row[5] else [],
+        "retrieval_info": json.loads(row[6]) if row[6] else {},
+        "errors": json.loads(row[7]) if row[7] else [],
+        "state_transition": json.loads(row[8]) if row[8] else None,
+    }
 
 
 def _get_target_state(mode: str, classification: ClassificationResult) -> str:

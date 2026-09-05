@@ -39,6 +39,7 @@ class TicketRepository:
         category: Optional[str] = None,
         customer_id: Optional[int] = None,
         search: Optional[str] = None,
+        archived: Optional[bool] = False,
         page: int = 1,
         page_size: int = 20,
     ) -> tuple[list[dict], int]:
@@ -63,6 +64,9 @@ class TicketRepository:
             )
             like = f"%{search}%"
             params.extend([like, like, like, like, like])
+        if archived is not None:
+            where_clauses.append("t.archived = ?")
+            params.append(1 if archived else 0)
 
         where_sql = ""
         if where_clauses:
@@ -119,13 +123,13 @@ class TicketRepository:
 
     def count_active_tickets(self) -> int:
         cursor = self.conn.execute(
-            "SELECT COUNT(*) FROM tickets WHERE status != 'resolved'"
+            "SELECT COUNT(*) FROM tickets WHERE status NOT IN ('resolved', 'dismissed')"
         )
         return cursor.fetchone()[0]
 
     def count_high_priority_active(self) -> int:
         cursor = self.conn.execute(
-            "SELECT COUNT(*) FROM tickets WHERE priority IN ('high', 'critical') AND status != 'resolved'"
+            "SELECT COUNT(*) FROM tickets WHERE priority IN ('high', 'critical') AND status NOT IN ('resolved', 'dismissed')"
         )
         return cursor.fetchone()[0]
 
@@ -135,7 +139,7 @@ class TicketRepository:
                FROM tickets t
                JOIN subscriptions s ON t.subscription_id = s.id
                JOIN network_sites ns ON s.network_site_id = ns.id
-               WHERE t.status != 'resolved'
+               WHERE t.status NOT IN ('resolved', 'dismissed')
                GROUP BY ns.region
                ORDER BY ticket_count DESC"""
         )
@@ -201,7 +205,9 @@ class TicketRepository:
     ) -> int:
         cursor = self.conn.execute(
             """SELECT COUNT(*) FROM tickets
-               WHERE customer_id = ? AND category = ? AND id != ?""",
+               WHERE customer_id = ? AND category = ? AND id != ?
+                                 AND archived = 0
+                                 AND status NOT IN ('resolved', 'dismissed', 'closed')""",
             (customer_id, category, exclude_ticket_id),
         )
         return cursor.fetchone()[0]

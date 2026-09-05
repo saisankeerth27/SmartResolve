@@ -26,6 +26,19 @@ def get_case_investigation(conn: sqlite3.Connection, ticket_id: int) -> dict | N
 
     subscription = tr.get_subscription_for_ticket(ticket_id)
     customer_subs = cr.get_subscriptions(customer_id)
+    if not subscription and customer_subs:
+        active_sub = next((s for s in customer_subs if s.get("status") == "active"), customer_subs[0])
+        sub_id = active_sub.get("id")
+        if sub_id:
+            try:
+                conn.execute(
+                    "UPDATE tickets SET subscription_id = ? WHERE id = ? AND subscription_id IS NULL",
+                    (sub_id, ticket_id),
+                )
+                conn.commit()
+                subscription = tr.get_subscription_for_ticket(ticket_id)
+            except Exception as e:
+                logger.warning("Auto-linking subscription failed for ticket %s: %s", ticket_id, e)
     ticket_history = tr.get_history(ticket_id)
     previous_tickets = tr.get_previous_tickets_by_customer(
         customer_id, ticket_id, limit=20
@@ -41,8 +54,18 @@ def get_case_investigation(conn: sqlite3.Connection, ticket_id: int) -> dict | N
             network_site = nr.get_site_by_id(site_id)
             network_events = nr.get_events_for_site(site_id, limit=10)
         region = subscription.get("region")
+        site_city = (subscription.get("city") or (network_site.get("city") if network_site else "") or "").lower()
         if region:
-            active_incidents = ir.get_active_by_region_list(region)
+            all_incidents = ir.get_active_by_region_list(region)
+            if site_city:
+                known_cities = ["hyderabad", "bengaluru", "chennai", "mumbai", "kochi", "delhi", "mysuru", "lucknow", "kolkata", "pune", "visakhapatnam", "vijayawada", "kurnool"]
+                active_incidents = [
+                    i for i in all_incidents
+                    if site_city in (i.get("title", "") + " " + i.get("description", "")).lower()
+                    or not any(c in (i.get("title", "") + " " + i.get("description", "")).lower() for c in known_cities if c != site_city)
+                ]
+            else:
+                active_incidents = all_incidents
 
     sub_count = cr.count_active_subscriptions(customer_id)
     ticket_count = cr.count_tickets(customer_id)

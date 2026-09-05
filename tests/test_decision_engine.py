@@ -66,8 +66,9 @@ def test_sensitive_case_escalates():
     assert any("SENSITIVE" in code for code in result.reason_codes)
 
 
-def test_active_major_incident_escalates():
-    """Active critical incident → Mode C."""
+def test_active_major_incident_routine_troubleshoots():
+    """Active critical incident on a routine category → Mode B (inform + gather details),
+    not a specialist dump. A real operator acknowledges the outage and keeps troubleshooting."""
     context = {
         "customer": {"name": "Test", "segment": "consumer", "status": "active"},
         "subscription": {"status": "active"},
@@ -77,7 +78,22 @@ def test_active_major_incident_escalates():
         "retrieval": {"total": 3, "average_score": 0.6},
     }
     result = classify_case(context)
-    assert result.mode == "C"
+    assert result.mode == "B", f"Expected Mode B (troubleshoot), got {result.mode}. Reasons: {result.reason_codes}"
+    assert any("MAJOR-INCIDENT" in code for code in result.reason_codes)
+
+
+def test_active_major_incident_non_routine_escalates():
+    """Active critical incident on a non-routine category still escalates (safety intact)."""
+    context = {
+        "customer": {"name": "Test", "segment": "consumer", "status": "active"},
+        "subscription": {"status": "active"},
+        "ticket": {"category": "account", "description": "my sim is not working"},
+        "investigation": {"same_category_previous_tickets": 0, "known_facts": [], "missing_information": []},
+        "incidents": [{"incident_number": "INC-001", "severity": "critical", "status": "investigating", "region": "South"}],
+        "retrieval": {"total": 3, "average_score": 0.6},
+    }
+    result = classify_case(context)
+    assert result.mode == "C", f"Expected Mode C, got {result.mode}. Reasons: {result.reason_codes}"
     assert any("MAJOR-INCIDENT" in code for code in result.reason_codes)
 
 
@@ -401,13 +417,37 @@ def test_missing_info_already_asked():
     assert "timing" not in missing
 
 
+def test_confirmed_answer_satisfies_field():
+    """A recorded customer answer satisfies its field even if the wording is loose.
+
+    Regression: "Customer confirmed timing: No, it just stopped" must be treated as
+    timing confirmed (the substring 'time' does NOT appear in 'timing'), so the
+    bot moves on instead of re-asking until it escalates to Mode C.
+    """
+    context = {
+        "ticket": {"category": "connectivity", "description": "Internet is not working", "subject": "Internet is not working"},
+        "investigation": {
+            "known_facts": [
+                "Customer confirmed timing: No, it just stopped",
+                "Customer confirmed device: My laptop",
+            ],
+            "missing_information": [],
+        },
+    }
+    missing = detect_missing_information(context)
+    assert "timing" not in missing, f"Recorded timing answer not honored: {missing}"
+    assert "device" not in missing, f"Recorded device answer not honored: {missing}"
+    assert "scope" in missing
+
+
 # ── Test Matrix ────────────────────────────────────────
 
 TEST_MATRIX = [
     ("missing_customer", "Mode C", test_missing_customer_escalates),
     ("missing_subscription", "Mode C", test_missing_subscription_escalates),
     ("sensitive_fraud", "Mode C", test_sensitive_case_escalates),
-    ("active_major_incident", "Mode C", test_active_major_incident_escalates),
+    ("active_major_incident_routine", "Mode B", test_active_major_incident_routine_troubleshoots),
+    ("active_major_incident_non_routine", "Mode C", test_active_major_incident_non_routine_escalates),
     ("repeat_complaint", "Mode C", test_repeat_complaint_escalates),
     ("enterprise_case", "Mode C", test_enterprise_case_escalates),
     ("site_offline", "Mode C", test_site_offline_escalates),
@@ -434,7 +474,8 @@ def run_all_tests():
         test_missing_customer_escalates,
         test_missing_subscription_escalates,
         test_sensitive_case_escalates,
-        test_active_major_incident_escalates,
+        test_active_major_incident_routine_troubleshoots,
+        test_active_major_incident_non_routine_escalates,
         test_repeat_complaint_escalates,
         test_enterprise_case_escalates,
         test_routine_request_mode_a,

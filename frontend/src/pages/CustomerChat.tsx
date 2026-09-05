@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, memo } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 interface Customer {
@@ -42,6 +42,48 @@ function getModeLabel(mode: string | null | undefined) {
   return ''
 }
 
+const ChatComposer = memo(function ChatComposer({
+  disabled,
+  sending,
+  onSend,
+}: {
+  disabled: boolean
+  sending: boolean
+  onSend: (content: string) => void
+}) {
+  const [draft, setDraft] = useState('')
+
+  const submit = () => {
+    const content = draft.trim()
+    if (!content || disabled || sending) return
+    setDraft('')
+    onSend(content)
+  }
+
+  return (
+    <div className="flex gap-2">
+      <input
+        type="text"
+        value={draft}
+        onChange={event => setDraft(event.target.value)}
+        onKeyDown={event => {
+          if (event.key === 'Enter' && !event.shiftKey) submit()
+        }}
+        placeholder="Type your message..."
+        className="flex-1 px-4 py-2.5 text-sm border border-surface-200 rounded-xl bg-surface-50 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+        disabled={disabled || sending}
+      />
+      <button
+        onClick={submit}
+        disabled={!draft.trim() || disabled || sending}
+        className="px-5 py-2.5 text-sm font-medium text-white bg-brand-600 rounded-xl hover:bg-brand-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+      >
+        Send
+      </button>
+    </div>
+  )
+})
+
 export default function CustomerChatPage() {
   const navigate = useNavigate()
   const [customers, setCustomers] = useState<Customer[]>([])
@@ -49,16 +91,22 @@ export default function CustomerChatPage() {
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [activeConvId, setActiveConvId] = useState<number | null>(null)
   const [messages, setMessages] = useState<ChatMessage[]>([])
-  const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
   const [loading, setLoading] = useState(true)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  const activeConversation = conversations.find(conv => conv.id === activeConvId)
+  const conversationClosed = activeConversation?.status === 'escalated'
+    || activeConversation?.status === 'escalation_requested'
+    || activeConversation?.status === 'human_review'
+    || activeConversation?.status === 'resolved'
+    || activeConversation?.status === 'dismissed'
 
   useEffect(() => {
     fetch('/api/chat/customers')
       .then(r => r.json())
       .then(d => { setCustomers(d.customers || []); setLoading(false) })
-      .catch(() => setLoading(false))
+      .catch(() => { setCustomers([]); setLoading(false) })
   }, [])
 
   const scrollToBottom = useCallback(() => {
@@ -68,9 +116,14 @@ export default function CustomerChatPage() {
   useEffect(() => { scrollToBottom() }, [messages, scrollToBottom])
 
   const loadConversations = useCallback(async (customerId: number) => {
-    const res = await fetch(`/api/chat/conversations/${customerId}`)
-    const data = await res.json()
-    setConversations(data.conversations || [])
+    try {
+      const res = await fetch(`/api/chat/conversations/${customerId}`)
+      if (!res.ok) throw new Error('Failed to load conversations')
+      const data = await res.json()
+      setConversations(data.conversations || [])
+    } catch {
+      setConversations([])
+    }
   }, [])
 
   const selectCustomer = useCallback(async (customer: Customer) => {
@@ -83,33 +136,38 @@ export default function CustomerChatPage() {
   const startNewConversation = useCallback(async () => {
     if (!selectedCustomer) return
     setMessages([])
-    const res = await fetch('/api/chat/send', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ customer_id: selectedCustomer.id, content: 'Hello, I need help.' }),
-    })
-    const data = await res.json()
-    if (data.conversation_id) {
-      setActiveConvId(data.conversation_id)
-      setMessages([
-        { sender: 'customer', content: 'Hello, I need help.' },
-        { sender: 'assistant', content: data.message, mode: data.mode },
-      ])
-      await loadConversations(selectedCustomer.id)
+    try {
+      const res = await fetch('/api/chat/start-conversation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ customer_id: selectedCustomer.id }),
+      })
+      if (!res.ok) throw new Error('Failed to start conversation')
+      const data = await res.json()
+      if (data.conversation_id) {
+        setActiveConvId(data.conversation_id)
+        setMessages([])
+        await loadConversations(selectedCustomer.id)
+      }
+    } catch {
+      setMessages([])
     }
   }, [selectedCustomer, loadConversations])
 
   const loadConversation = useCallback(async (conv: Conversation) => {
     setActiveConvId(conv.id)
-    const res = await fetch(`/api/chat/messages/${conv.id}`)
-    const data = await res.json()
-    setMessages(data.messages || [])
+    try {
+      const res = await fetch(`/api/chat/messages/${conv.id}`)
+      if (!res.ok) throw new Error('Failed to load messages')
+      const data = await res.json()
+      setMessages(data.messages || [])
+    } catch {
+      setMessages([])
+    }
   }, [])
 
-  const sendMessage = useCallback(async () => {
-    if (!input.trim() || !selectedCustomer || !activeConvId || sending) return
-    const content = input.trim()
-    setInput('')
+  const sendMessage = useCallback(async (content: string) => {
+    if (!content.trim() || !selectedCustomer || sending) return
     setMessages(prev => [...prev, { sender: 'customer', content }])
     setSending(true)
 
@@ -119,13 +177,23 @@ export default function CustomerChatPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           customer_id: selectedCustomer.id,
-          conversation_id: activeConvId,
+          conversation_id: activeConvId || undefined,
           content,
         }),
       })
       const data = await res.json()
+      if (data.conversation_id && !activeConvId) {
+        setActiveConvId(data.conversation_id)
+      }
       if (data.message) {
         setMessages(prev => [...prev, { sender: 'assistant', content: data.message, mode: data.mode }])
+      }
+      if (data.transcript_only) {
+        const refreshed = await fetch(`/api/chat/messages/${data.conversation_id}`)
+        if (refreshed.ok) {
+          const refreshedData = await refreshed.json()
+          setMessages(refreshedData.messages || [])
+        }
       }
       await loadConversations(selectedCustomer.id)
     } catch {
@@ -133,16 +201,16 @@ export default function CustomerChatPage() {
     } finally {
       setSending(false)
     }
-  }, [input, selectedCustomer, activeConvId, sending, loadConversations])
+  }, [selectedCustomer, activeConvId, sending, loadConversations])
 
   if (loading) {
     return <div className="p-8 text-center text-surface-400">Loading customers...</div>
   }
 
   return (
-    <div className="flex h-[calc(100vh-4rem)]">
+    <div className="flex h-full">
       {/* Left: Customer list + conversations */}
-      <div className="w-80 border-r border-surface-200 flex flex-col bg-white">
+      <div className="w-96 border-r border-surface-200 flex flex-col bg-white">
         <div className="p-3 border-b border-surface-100">
           <h3 className="text-sm font-semibold text-surface-900">Select Customer</h3>
         </div>
@@ -283,24 +351,22 @@ export default function CustomerChatPage() {
 
             {/* Input */}
             <div className="p-3 bg-white border-t border-surface-200">
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={input}
-                  onChange={e => setInput(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage()}
-                  placeholder="Type your message..."
-                  className="flex-1 px-4 py-2.5 text-sm border border-surface-200 rounded-xl bg-surface-50 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
-                  disabled={sending}
-                />
-                <button
-                  onClick={sendMessage}
-                  disabled={!input.trim() || sending}
-                  className="px-5 py-2.5 text-sm font-medium text-white bg-brand-600 rounded-xl hover:bg-brand-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                >
-                  Send
-                </button>
-              </div>
+              {conversationClosed ? (
+                <div className="flex items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+                  <div>
+                    <p className="text-sm font-medium text-amber-900">This conversation is closed for automated replies.</p>
+                    <p className="text-xs text-amber-700 mt-0.5">The transcript is available to the human agent. Start a new conversation to contact SmartResolve again.</p>
+                  </div>
+                  <button
+                    onClick={startNewConversation}
+                    className="shrink-0 px-3 py-2 text-xs font-medium text-white bg-brand-600 rounded-lg hover:bg-brand-700 transition-colors"
+                  >
+                    New Conversation
+                  </button>
+                </div>
+              ) : (
+                <ChatComposer disabled={!activeConvId} sending={sending} onSend={sendMessage} />
+              )}
             </div>
           </>
         )}

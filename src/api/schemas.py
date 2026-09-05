@@ -90,6 +90,7 @@ class TicketResponse(BaseModel):
     service_number: str | None = None
     service_type: str | None = None
     plan_name: str | None = None
+    archived: bool = False
 
 
 class TicketListResponse(BaseModel):

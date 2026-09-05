@@ -75,7 +75,7 @@ def record_retrieval(conn, ticket_id: int, total: int, avg_score: float, categor
     })
 
 
-def record_clarification(conn, ticket_id: int, field: str, question: str, turn: int) -> None:
+def record_clarification(conn, ticket_id: int, field: str, question: str = "", turn: int = 1) -> None:
     """Record clarification question."""
     record_event(conn, ticket_id, "clarification_asked", {
         "missing_field": field,
@@ -100,12 +100,15 @@ def record_escalation(conn, ticket_id: int, queue: str, reasons: list[str]) -> N
     })
 
 
-def record_draft_generated(conn, ticket_id: int, confidence: float, limitations: list[str]) -> None:
+def record_draft_generated(conn, ticket_id: int, confidence: float | dict | None = 0.8, limitations: list[str] | None = None) -> None:
     """Record draft generation."""
-    record_event(conn, ticket_id, "draft_generated", {
-        "confidence": confidence,
-        "limitations": limitations,
-    })
+    if isinstance(confidence, dict):
+        record_event(conn, ticket_id, "draft_generated", confidence)
+    else:
+        record_event(conn, ticket_id, "draft_generated", {
+            "confidence": confidence,
+            "limitations": limitations or [],
+        })
 
 
 def record_review_started(conn, ticket_id: int, reviewer: str) -> None:

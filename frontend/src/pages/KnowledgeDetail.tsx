@@ -25,7 +25,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 }
 
 export function KnowledgeDetailPage() {
-  const { documentId } = useParams<{ documentId: string }>()
+  const { id: documentId } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [doc, setDoc] = useState<KnowledgeDocumentDetail | null>(null)
   const [loading, setLoading] = useState(true)

@@ -629,6 +629,10 @@ export function CaseDetailPage() {
   const [resolutionError, setResolutionError] = useState<string | null>(null)
   const [reviewDecision, setReviewDecision] = useState<string | null>(null)
   const [evidenceExpanded, setEvidenceExpanded] = useState(false)
+  const [managementMessage, setManagementMessage] = useState<string | null>(null)
+  const [internalNote, setInternalNote] = useState('')
+  const [resolutionDraft, setResolutionDraft] = useState('')
+  const [internalNotes, setInternalNotes] = useState<Array<{ id: number; note: string; author: string; created_at: string }>>([])
 
   const fetchData = useCallback(async () => {
     if (!ticketId) return
@@ -637,6 +641,15 @@ export function CaseDetailPage() {
     try {
       const result = await fetchInvestigation(Number(ticketId))
       setData(result)
+      const [notesResponse, draftResponse] = await Promise.all([
+        fetch(`/api/tickets/${ticketId}/notes`),
+        fetch(`/api/tickets/${ticketId}/resolution-draft`),
+      ])
+      if (notesResponse.ok) setInternalNotes((await notesResponse.json()).notes || [])
+      if (draftResponse.ok) {
+        const draftData = await draftResponse.json()
+        setResolutionDraft(draftData.draft?.draft || '')
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load investigation')
     } finally {
@@ -683,6 +696,37 @@ export function CaseDetailPage() {
       console.error('Failed to submit review:', err)
     }
   }, [ticketId, resolution])
+
+  const updateTicket = useCallback(async (body: Record<string, unknown>) => {
+    if (!ticketId) return
+    const response = await fetch(`/api/tickets/${ticketId}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+    })
+    if (!response.ok) throw new Error((await response.json()).detail || 'Ticket update failed')
+    setManagementMessage('Saved')
+    await fetchData()
+  }, [ticketId, fetchData])
+
+  const updateStatus = useCallback(async (status: string) => {
+    if (!ticketId) return
+    const response = await fetch(`/api/tickets/${ticketId}/status`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status, reason: 'Updated by agent in Case Investigation' }),
+    })
+    if (!response.ok) throw new Error((await response.json()).detail || 'Status update failed')
+    setManagementMessage('Status updated')
+    await fetchData()
+  }, [ticketId, fetchData])
+
+  const saveNote = useCallback(async () => {
+    if (!ticketId || !internalNote.trim()) return
+    const response = await fetch(`/api/tickets/${ticketId}/notes`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ note: internalNote.trim() }),
+    })
+    if (!response.ok) throw new Error((await response.json()).detail || 'Note failed')
+    setInternalNote('')
+    setManagementMessage('Internal note added')
+    await fetchData()
+  }, [ticketId, internalNote, fetchData])
 
   useEffect(() => {
     fetchData()
@@ -741,6 +785,70 @@ export function CaseDetailPage() {
         </div>
       </div>
 
+      <PanelCard title="Ticket Management">
+        {(() => {
+          const VALID_TRANSITIONS: Record<string, string[]> = {
+            open: ['analyzing'],
+            new: ['analyzing'],
+            analyzing: ['needs_information', 'pending_agent_approval', 'escalation_requested'],
+            needs_information: ['analyzing', 'escalation_requested', 'dismissed', 'open'],
+            pending_agent_approval: ['approved', 'dismissed', 'escalation_requested', 'needs_information'],
+            escalation_requested: ['human_review', 'dismissed', 'needs_information', 'approved'],
+            human_review: ['approved', 'dismissed', 'needs_information'],
+            approved: ['resolved', 'needs_information'],
+            dismissed: ['open'],
+            resolved: ['open'],
+          }
+          const current = ticket.status
+          const targets = VALID_TRANSITIONS[current] || []
+          return (
+        <div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <label className="text-xs text-surface-500">Status
+            <select value={ticket.status} onChange={event => updateStatus(event.target.value).catch(err => setManagementMessage(err.message))} className="mt-1 w-full px-2 py-2 text-sm border border-surface-200 rounded-lg bg-white">
+              <option value={current}>{current.replace(/_/g, ' ')} (current)</option>
+              {targets.map(value => <option key={value} value={value}>{value.replace(/_/g, ' ')}</option>)}
+            </select>
+          </label>
+          <label className="text-xs text-surface-500">Category
+            <select value={ticket.category} onChange={event => updateTicket({ category: event.target.value }).catch(err => setManagementMessage(err.message))} className="mt-1 w-full px-2 py-2 text-sm border border-surface-200 rounded-lg bg-white">
+              {['network', 'connectivity', 'billing', 'voice', 'sms', 'roaming', 'device', 'account'].map(value => <option key={value} value={value}>{value}</option>)}
+            </select>
+          </label>
+          <label className="text-xs text-surface-500">Priority
+            <select value={ticket.priority} onChange={event => updateTicket({ priority: event.target.value }).catch(err => setManagementMessage(err.message))} className="mt-1 w-full px-2 py-2 text-sm border border-surface-200 rounded-lg bg-white">
+              {['low', 'medium', 'high', 'critical'].map(value => <option key={value} value={value}>{value}</option>)}
+            </select>
+          </label>
+          <label className="text-xs text-surface-500">Assignment
+            <select value={ticket.assigned_team || ''} onChange={event => updateTicket({ assigned_team: event.target.value }).catch(err => setManagementMessage(err.message))} className="mt-1 w-full px-2 py-2 text-sm border border-surface-200 rounded-lg bg-white">
+              <option value="">Unassigned</option><option value="Human Review">Human Review</option><option value="Agent">Agent</option>
+            </select>
+          </label>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+          <div>
+            <label className="text-xs text-surface-500">Internal note</label>
+            <textarea value={internalNote} onChange={event => setInternalNote(event.target.value)} placeholder="Visible to agents only" className="mt-1 w-full min-h-20 px-3 py-2 text-sm border border-surface-200 rounded-lg" />
+            <button onClick={() => saveNote().catch(err => setManagementMessage(err.message))} disabled={!internalNote.trim()} className="mt-1 px-3 py-1.5 text-xs font-medium text-white bg-brand-600 rounded-lg disabled:opacity-40">Add Note</button>
+            {internalNotes.length > 0 && <div className="mt-3 space-y-2 max-h-32 overflow-y-auto">{internalNotes.map(note => <div key={note.id} className="border-l-2 border-brand-200 pl-2"><p className="text-xs text-surface-700">{note.note}</p><p className="text-[10px] text-surface-400">{note.author} · {formatTimestamp(note.created_at)}</p></div>)}</div>}
+          </div>
+          <div>
+            <label className="text-xs text-surface-500">Edited resolution draft</label>
+            <textarea value={resolutionDraft} onChange={event => setResolutionDraft(event.target.value)} placeholder="Save the exact agent-approved wording here" className="mt-1 w-full min-h-20 px-3 py-2 text-sm border border-surface-200 rounded-lg" />
+            <button onClick={() => updateTicket({ resolution_draft: resolutionDraft }).catch(err => setManagementMessage(err.message))} disabled={!resolutionDraft.trim()} className="mt-1 px-3 py-1.5 text-xs font-medium text-white bg-brand-600 rounded-lg disabled:opacity-40">Save Draft</button>
+          </div>
+        </div>
+        {managementMessage && <p className="mt-2 text-xs text-emerald-700">{managementMessage}</p>}
+        <div className="flex gap-2 mt-3">
+          <button onClick={() => fetch(`/api/tickets/${ticket.id}/archive`, { method: 'POST' }).then(() => navigate('/cases'))} className="px-3 py-1.5 text-xs font-medium text-surface-700 bg-surface-100 rounded-lg">Archive Ticket</button>
+          {(ticket.status === 'resolved' || ticket.status === 'closed') && <button onClick={() => updateStatus('open').catch(err => setManagementMessage(err.message))} className="px-3 py-1.5 text-xs font-medium text-brand-700 bg-brand-50 rounded-lg">Reopen</button>}
+        </div>
+        </div>
+        )
+        })()}
+      </PanelCard>
+
       {/* Readiness */}
       <div className="bg-white rounded-xl border border-surface-200 p-4">
         <div className="flex items-center justify-between flex-wrap gap-3">
@@ -750,9 +858,9 @@ export function CaseDetailPage() {
       </div>
 
       {/* Main grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Left column - Customer + Service + Network */}
-        <div className="lg:col-span-2 space-y-4">
+        <div className="space-y-4">
           {/* Customer Profile */}
           {customer && (
             <PanelCard title="Customer">

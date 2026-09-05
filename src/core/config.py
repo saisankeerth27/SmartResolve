@@ -1,7 +1,12 @@
 import os
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
+
+# Load .env from the project root (ignored by git). Real env vars take precedence.
+load_dotenv(BASE_DIR / ".env")
 
 PORT = int(os.getenv("PORT", "8000"))
 HOST = "0.0.0.0"

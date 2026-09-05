@@ -141,7 +141,7 @@ class CustomerRepository:
 
     def count_tickets(self, customer_id: int) -> int:
         cursor = self.conn.execute(
-            "SELECT COUNT(*) FROM tickets WHERE customer_id = ?",
+            "SELECT COUNT(DISTINCT id) FROM tickets WHERE customer_id = ? AND archived = 0",
             (customer_id,),
         )
         return cursor.fetchone()[0]

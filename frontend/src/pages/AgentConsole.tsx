@@ -558,13 +558,9 @@ function ResolutionDraft({
 
 function ClarificationPanel({
   clarification,
-  onSubmitAnswer,
 }: {
   clarification: AnalysisResult['clarification']
-  onSubmitAnswer: (field: string, answer: string) => void
 }) {
-  const [answer, setAnswer] = useState('')
-
   if (!clarification) return null
 
   return (
@@ -583,33 +579,6 @@ function ClarificationPanel({
         </div>
       </div>
 
-      <div className="flex gap-2">
-        <input
-          type="text"
-          placeholder="Type customer response..."
-          value={answer}
-          onChange={(e) => setAnswer(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && answer.trim()) {
-              onSubmitAnswer(clarification.missing_field, answer.trim())
-              setAnswer('')
-            }
-          }}
-          className="flex-1 px-3 py-2 text-xs border border-surface-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-brand-500"
-        />
-        <button
-          onClick={() => {
-            if (answer.trim()) {
-              onSubmitAnswer(clarification.missing_field, answer.trim())
-              setAnswer('')
-            }
-          }}
-          disabled={!answer.trim()}
-          className="px-3 py-2 text-xs font-medium text-white bg-amber-600 rounded-lg hover:bg-amber-700 transition-colors disabled:opacity-50"
-        >
-          Send Question
-        </button>
-      </div>
     </div>
   )
 }
@@ -772,7 +741,7 @@ export default function AgentConsolePage() {
   const [analyzing, setAnalyzing] = useState(false)
   const [errors, setErrors] = useState<string[]>([])
   const [conversation, setConversation] = useState<Array<{sender: string; content: string; mode?: string | null; created_at?: string}>>([])
-  const [showConversation, setShowConversation] = useState(false)
+  const [showConversation, setShowConversation] = useState(true)
   const [refreshKey, setRefreshKey] = useState(0)
 
   const loadCase = useCallback(async (ticketId: number) => {
@@ -803,6 +772,28 @@ export default function AgentConsolePage() {
       }
     } catch {
       // Conversation not available
+    }
+
+    try {
+      const lastRes = await fetch(`/api/cases/${ticketId}/last-analysis`)
+      if (lastRes.ok) {
+        const lastData = await lastRes.json()
+        if (lastData && lastData.mode) {
+          setAnalysis(lastData)
+        }
+      }
+    } catch {
+      // Last analysis not available
+    }
+
+    try {
+      const auditRes = await fetch(`/api/cases/${ticketId}/audit`)
+      if (auditRes.ok) {
+        const auditData = await auditRes.json()
+        setAuditEvents(auditData.audit || [])
+      }
+    } catch {
+      // Audit not available
     }
   }, [])
 
@@ -857,7 +848,6 @@ export default function AgentConsolePage() {
       if (res.ok && result.success) {
         // Refresh the case
         await loadCase(selectedId)
-        setAnalysis(null)
         setRefreshKey(k => k + 1)
       } else if (!res.ok) {
         setErrors([result.detail || 'Action failed'])
@@ -867,29 +857,23 @@ export default function AgentConsolePage() {
     }
   }, [selectedId, loadCase])
 
-  const handleSubmitAnswer = useCallback(async (field: string, answer: string) => {
-    if (!selectedId) return
-
-    try {
-      const res = await fetch(`/api/cases/${selectedId}/clarify`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ field, answer }),
-      })
-      if (res.ok) {
-        const data = await res.json()
-        // Update analysis with new mode
-        setAnalysis(prev => prev ? { ...prev, mode: data.new_mode, classification: data.classification, draft: data.draft, clarification: data.clarification } : null)
-      }
-    } catch {
-      // Clarification failed
-    }
-  }, [selectedId])
-
   return (
-    <div className="flex h-[calc(100vh-3.5rem)] -m-4 lg:-m-6">
+    <div className="flex flex-col h-full">
+      {/* Page Header */}
+      <div className="px-6 py-4 bg-white border-b border-surface-200 flex items-center justify-between shrink-0">
+        <div>
+          <h1 className="text-lg font-semibold text-surface-900">Agent Console</h1>
+          <p className="text-xs text-surface-500">Analyze cases with Mode A/B/C deterministic classification</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-[10px] font-medium text-surface-500 bg-surface-100 px-2.5 py-1 rounded-full border border-surface-200">Data Layer v0.5</span>
+          <div className="w-8 h-8 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-xs font-bold">OP</div>
+        </div>
+      </div>
+      {/* Main Content */}
+      <div className="flex flex-1 min-h-0">
       {/* Left: Support Queue */}
-      <div className="w-72 border-r border-surface-200 bg-white shrink-0 hidden md:flex flex-col">
+      <div className="w-80 border-r border-surface-200 bg-white shrink-0 hidden md:flex flex-col">
         <SupportQueue
           key={refreshKey}
           selectedId={selectedId}
@@ -956,6 +940,8 @@ export default function AgentConsolePage() {
                     </svg>
                     Analyzing...
                   </span>
+                ) : analysis ? (
+                  'Re-analyze'
                 ) : (
                   'Analyze Case'
                 )}
@@ -1027,7 +1013,6 @@ export default function AgentConsolePage() {
               {analysis && analysis.mode === 'B' && analysis.clarification && (
                 <ClarificationPanel
                   clarification={analysis.clarification}
-                  onSubmitAnswer={handleSubmitAnswer}
                 />
               )}
 
@@ -1100,6 +1085,7 @@ export default function AgentConsolePage() {
           <h3 className="text-xs font-semibold text-surface-900 uppercase tracking-wider">Case Context</h3>
         </div>
         <CustomerContext investigation={investigation} />
+      </div>
       </div>
     </div>
   )

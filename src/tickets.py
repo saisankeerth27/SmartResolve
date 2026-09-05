@@ -19,10 +19,12 @@ VALID_STATES = (
     "resolved",
 )
 
+MANAGEMENT_STATES = ("in_progress", "pending_customer", "escalated", "closed")
+
 # ── Valid transitions ─────────────────────────────────
 VALID_TRANSITIONS: dict[str, list[str]] = {
-    "open": ["analyzing"],
-    "new": ["analyzing"],
+    "open": ["analyzing", "needs_information", "escalation_requested"],
+    "new": ["analyzing", "needs_information", "escalation_requested"],
     "analyzing": ["needs_information", "pending_agent_approval", "escalation_requested"],
     "needs_information": ["analyzing", "escalation_requested", "dismissed", "open"],
     "pending_agent_approval": ["approved", "dismissed", "escalation_requested", "needs_information"],
@@ -31,6 +33,16 @@ VALID_TRANSITIONS: dict[str, list[str]] = {
     "approved": ["resolved", "needs_information"],
     "dismissed": ["open"],
     "resolved": ["open"],
+}
+
+MANAGEMENT_TRANSITIONS: dict[str, list[str]] = {
+    "open": ["analyzing", "in_progress", "needs_information", "pending_customer", "resolved", "escalated", "closed"],
+    "new": ["analyzing", "in_progress", "needs_information", "pending_customer", "resolved", "escalated", "closed"],
+    "in_progress": ["open", "needs_information", "pending_customer", "resolved", "escalated", "closed"],
+    "pending_customer": ["open", "in_progress", "needs_information", "resolved", "closed"],
+    "escalated": ["human_review", "open", "in_progress", "closed"],
+    "closed": ["open", "in_progress"],
+    "resolved": ["open", "in_progress", "closed"],
 }
 
 
@@ -55,11 +67,14 @@ class InvalidTransitionError(Exception):
 
 def validate_transition(from_state: str, to_state: str) -> bool:
     """Check if a state transition is valid."""
-    if from_state not in VALID_STATES:
+    if from_state not in VALID_STATES + MANAGEMENT_STATES:
         raise ValueError(f"Unknown state: '{from_state}'")
-    if to_state not in VALID_STATES:
+    if to_state not in VALID_STATES + MANAGEMENT_STATES:
         raise ValueError(f"Unknown state: '{to_state}'")
-    allowed = VALID_TRANSITIONS.get(from_state, [])
+    if from_state in MANAGEMENT_STATES or to_state in MANAGEMENT_STATES:
+        allowed = MANAGEMENT_TRANSITIONS.get(from_state, VALID_TRANSITIONS.get(from_state, []))
+    else:
+        allowed = VALID_TRANSITIONS.get(from_state, [])
     if to_state not in allowed:
         return False
     return True
