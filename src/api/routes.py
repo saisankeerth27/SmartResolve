@@ -36,6 +36,17 @@ from src.api.schemas import (
     PreviousTicket,
     CustomerStats,
     InvestigationResult,
+    KnowledgeDocumentSummary,
+    KnowledgeDocumentListResponse,
+    KnowledgeDocumentDetail,
+    KnowledgeCategoryInfo,
+    KnowledgeCategoryListResponse,
+    KnowledgeSearchResult,
+    KnowledgeSearchResponse,
+    KnowledgeChunk,
+    KnowledgeChunkListResponse,
+    KnowledgeSection,
+    KnowledgeChunkPreview,
 )
 from src.core.config import SERVICE_NAME, GEMINI_CONFIGURED, FRONTEND_DIST
 from src.database.db import get_connection
@@ -46,6 +57,7 @@ from src.database.repositories.incident_repository import IncidentRepository
 from src.database.repositories.plan_repository import PlanRepository
 from src.services.dashboard_service import get_dashboard_overview
 from src.services.case_investigation_service import get_case_investigation
+from src.services import knowledge_service
 
 logger = logging.getLogger(__name__)
 
@@ -444,6 +456,84 @@ async def get_investigation(ticket_id: int):
         )
     finally:
         conn.close()
+
+
+# ── Knowledge Base ──────────────────────────────────────
+
+@router.get("/knowledge", response_model=KnowledgeDocumentListResponse)
+async def list_knowledge_documents(
+    category: str | None = Query(None),
+) -> KnowledgeDocumentListResponse:
+    docs = knowledge_service.list_documents(category=category)
+    return KnowledgeDocumentListResponse(
+        data=[KnowledgeDocumentSummary(**d) for d in docs],
+        total=len(docs),
+    )
+
+
+@router.get("/knowledge/categories", response_model=KnowledgeCategoryListResponse)
+async def list_knowledge_categories() -> KnowledgeCategoryListResponse:
+    cats = knowledge_service.list_categories()
+    return KnowledgeCategoryListResponse(
+        data=[KnowledgeCategoryInfo(**c) for c in cats],
+        total=len(cats),
+    )
+
+
+@router.get("/knowledge/search", response_model=KnowledgeSearchResponse)
+async def search_knowledge(
+    q: str = Query(..., min_length=1),
+    category: str | None = Query(None),
+    limit: int = Query(20, ge=1, le=50),
+) -> KnowledgeSearchResponse:
+    results = knowledge_service.search_documents(query=q, category=category, limit=limit)
+    search_results = []
+    for r in results:
+        chunks = [KnowledgeChunkPreview(**c) for c in r.get("matching_chunks", [])]
+        search_results.append(KnowledgeSearchResult(
+            id=r["id"],
+            title=r["title"],
+            category=r["category"],
+            score=r["score"],
+            matching_chunks=chunks,
+            preview=r.get("preview", ""),
+        ))
+    return KnowledgeSearchResponse(
+        query=q,
+        category=category,
+        results=search_results,
+        total=len(search_results),
+    )
+
+
+@router.get("/knowledge/{document_id}", response_model=KnowledgeDocumentDetail)
+async def get_knowledge_document(document_id: str) -> KnowledgeDocumentDetail:
+    doc = knowledge_service.get_document(document_id)
+    if not doc:
+        raise HTTPException(status_code=404, detail="Knowledge document not found")
+    sections = [KnowledgeSection(**s) for s in doc["sections"]]
+    return KnowledgeDocumentDetail(
+        id=doc["id"],
+        title=doc["title"],
+        category=doc["category"],
+        tags=doc["tags"],
+        path=doc["path"],
+        content=doc["content"],
+        sections=sections,
+    )
+
+
+@router.get("/knowledge/{document_id}/chunks", response_model=KnowledgeChunkListResponse)
+async def get_knowledge_chunks(document_id: str) -> KnowledgeChunkListResponse:
+    doc = knowledge_service.get_document(document_id)
+    if not doc:
+        raise HTTPException(status_code=404, detail="Knowledge document not found")
+    chunks = knowledge_service.get_chunks(document_id)
+    return KnowledgeChunkListResponse(
+        document_id=document_id,
+        chunks=[KnowledgeChunk(**c) for c in chunks],
+        total=len(chunks),
+    )
 
 
 # ── Frontend Serving ────────────────────────────────────

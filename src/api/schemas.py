@@ -400,3 +400,84 @@ class InvestigationContext(BaseModel):
     interactions: list[InvestigationInteraction]
     customer_stats: CustomerStats
     investigation: InvestigationResult
+
+
+# ── Knowledge Base Schemas ──────────────────────────────
+
+class KnowledgeChunkPreview(BaseModel):
+    chunk_id: str
+    section_heading: str
+    preview: str
+    score: int
+
+
+class KnowledgeSearchResult(BaseModel):
+    id: str
+    title: str
+    category: str
+    score: int
+    matching_chunks: list[KnowledgeChunkPreview]
+    preview: str
+
+
+class KnowledgeSearchResponse(BaseModel):
+    query: str
+    category: str | None
+    results: list[KnowledgeSearchResult]
+    total: int
+
+
+class KnowledgeDocumentSummary(BaseModel):
+    id: str
+    title: str
+    category: str
+    tags: list[str]
+    path: str
+    sections_count: int
+
+
+class KnowledgeDocumentListResponse(BaseModel):
+    data: list[KnowledgeDocumentSummary]
+    total: int
+
+
+class KnowledgeSection(BaseModel):
+    heading: str
+    content: str
+
+
+class KnowledgeDocumentDetail(BaseModel):
+    id: str
+    title: str
+    category: str
+    tags: list[str]
+    path: str
+    content: str
+    sections: list[KnowledgeSection]
+
+
+class KnowledgeCategoryInfo(BaseModel):
+    category: str
+    count: int
+
+
+class KnowledgeCategoryListResponse(BaseModel):
+    data: list[KnowledgeCategoryInfo]
+    total: int
+
+
+class KnowledgeChunk(BaseModel):
+    chunk_id: str
+    document_id: str
+    document_title: str
+    category: str
+    section_heading: str
+    chunk_index: int
+    content: str
+    word_count: int
+
+
+class KnowledgeChunkListResponse(BaseModel):
+    document_id: str
+    chunks: list[KnowledgeChunk]
+    total: int

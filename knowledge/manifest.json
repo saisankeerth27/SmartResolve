@@ -1,0 +1,246 @@
+{
+  "version": "1.0",
+  "generated_at": "2026-09-05",
+  "documents": [
+    {
+      "id": "network-incident-response",
+      "title": "Network Incident Response Procedures",
+      "path": "network/network-incident-response.md",
+      "category": "network",
+      "tags": ["incident", "response", "escalation", "noc", "p1", "p2", "p3", "p4", "severity"],
+      "sections": ["Purpose", "Incident Severity Classification", "Initial Response Checklist", "Escalation Matrix", "Communication Templates", "Post-Incident Review", "Recovery Procedures"]
+    },
+    {
+      "id": "network-health-monitoring",
+      "title": "Network Health Monitoring Standards",
+      "path": "network/network-health-monitoring.md",
+      "category": "network",
+      "tags": ["monitoring", "health", "alerts", "sla", "availability", "degraded", "critical"],
+      "sections": ["Overview", "Health State Definitions", "Health Determination Logic", "Monitoring Endpoints", "Key Metrics", "Alert Thresholds", "Dashboard Integration", "SLA Thresholds"]
+    },
+    {
+      "id": "cell-site-operations",
+      "title": "Cell Site Operations Guide",
+      "path": "network/cell-site-operations.md",
+      "category": "network",
+      "tags": ["cell site", "tower", "backhaul", "capacity", "maintenance", "macro", "small cell", "das"],
+      "sections": ["Site Types", "Site Status Codes", "Capacity Management", "Backhaul Requirements", "Maintenance Procedures", "Troubleshooting Checklist"]
+    },
+    {
+      "id": "network-technology-overview",
+      "title": "Network Technology Overview",
+      "path": "network/network-technology-overview.md",
+      "category": "network",
+      "tags": ["lte", "5g", "nr", "3g", "volte", "vonr", "vowifi", "nb-iot", "lte-m", "architecture"],
+      "sections": ["LTE (4G)", "5G NR", "3G (Legacy)", "Network Architecture", "Voice Services", "IoT Connectivity"]
+    },
+    {
+      "id": "spectrum-management",
+      "title": "Spectrum Management and Allocation",
+      "path": "network/spectrum-management.md",
+      "category": "network",
+      "tags": ["spectrum", "frequency", "bands", "allocation", "interference", "carrier aggregation"],
+      "sections": ["Overview", "Licensed Spectrum Holdings", "Spectrum Allocation Rules", "Interference Management", "Carrier Aggregation", "Dynamic Spectrum Sharing"]
+    },
+    {
+      "id": "mobile-data-troubleshooting",
+      "title": "Mobile Data Connectivity Troubleshooting",
+      "path": "connectivity/mobile-data-troubleshooting.md",
+      "category": "connectivity",
+      "tags": ["data", "troubleshooting", "speed", "connection", "apn", "signal", "coverage"],
+      "sections": ["Common Symptoms", "Diagnostic Steps", "Resolution Procedures", "Advanced Diagnostics", "Escalation Criteria"]
+    },
+    {
+      "id": "wifi-calling-setup",
+      "title": "Wi-Fi Calling Setup and Troubleshooting",
+      "path": "connectivity/wifi-calling-setup.md",
+      "category": "connectivity",
+      "tags": ["wifi calling", "vowifi", "setup", "troubleshooting", "emergency address", "handover"],
+      "sections": ["Overview", "Prerequisites", "Setup Procedures", "Troubleshooting", "Known Limitations"]
+    },
+    {
+      "id": "apn-configuration",
+      "title": "APN Configuration Guide",
+      "path": "connectivity/apn-configuration.md",
+      "category": "connectivity",
+      "tags": ["apn", "configuration", "data", "mms", "internet", "settings"],
+      "sections": ["What is an APN", "Default APN Settings", "Configuration Procedures", "Troubleshooting"]
+    },
+    {
+      "id": "service-activation",
+      "title": "Service Activation Procedures",
+      "path": "connectivity/service-activation.md",
+      "category": "connectivity",
+      "tags": ["activation", "new line", "sim", "esim", "plan change", "upgrade", "downgrade", "suspension"],
+      "sections": ["Overview", "New Line Activation", "Plan Change Procedures", "Device Activation", "Service Suspension", "Service Restoration"]
+    },
+    {
+      "id": "coverage-issues",
+      "title": "Coverage Issue Resolution",
+      "path": "connectivity/coverage-issues.md",
+      "category": "connectivity",
+      "tags": ["coverage", "signal", "dead zone", "indoor", "outdoor", "rsrp", "rsrq", "sinr"],
+      "sections": ["Coverage Definitions", "Common Coverage Issues", "Coverage Investigation Process", "Coverage Improvement Solutions"]
+    },
+    {
+      "id": "billing-cycle-management",
+      "title": "Billing Cycle Management",
+      "path": "billing/billing-cycle-management.md",
+      "category": "billing",
+      "tags": ["billing", "cycle", "proration", "credits", "adjustments", "late payment", "suspension"],
+      "sections": ["Overview", "Billing Cycle Structure", "Prorated Charges", "Credits and Adjustments", "Late Payment and Non-Payment", "Refund Policy"]
+    },
+    {
+      "id": "data-usage-throttling",
+      "title": "Data Usage and Throttling Policies",
+      "path": "billing/data-usage-and-throttling.md",
+      "category": "billing",
+      "tags": ["data", "usage", "throttling", "limit", "overage", "top-up", "alerts", "monitoring"],
+      "sections": ["Data Plan Tiers", "Throttling Mechanism", "Data Usage Tracking", "Throttle Removal", "Overage Charges", "Data Top-Up", "Data Usage Monitoring", "Enterprise Plans"]
+    },
+    {
+      "id": "invoice-disputes",
+      "title": "Invoice Dispute Procedures",
+      "path": "billing/invoice-disputes.md",
+      "category": "billing",
+      "tags": ["dispute", "invoice", "billing error", "credit", "refund", "unauthorized charges"],
+      "sections": ["Overview", "Types of Disputes", "Dispute Resolution Process", "Credit Limits", "Time Limits"]
+    },
+    {
+      "id": "payment-methods",
+      "title": "Payment Methods and Processing",
+      "path": "billing/payment-methods.md",
+      "category": "billing",
+      "tags": ["payment", "credit card", "ach", "autopay", "bill pay", "late fee", "suspension"],
+      "sections": ["Accepted Payment Methods", "Payment Processing", "AutoPay", "Past Due Accounts"]
+    },
+    {
+      "id": "roaming-policies",
+      "title": "Roaming Policies and Procedures",
+      "path": "roaming/roaming-policies.md",
+      "category": "roaming",
+      "tags": ["roaming", "domestic", "international", "charges", "plans", "activation", "troubleshooting"],
+      "sections": ["Overview", "Domestic Roaming", "International Roaming", "Roaming Partner Management", "Roaming Troubleshooting"]
+    },
+    {
+      "id": "international-roaming-troubleshooting",
+      "title": "International Roaming Troubleshooting Guide",
+      "path": "roaming/international-roaming-troubleshooting.md",
+      "category": "roaming",
+      "tags": ["international roaming", "troubleshooting", "travel", "abroad", "network", "emergency"],
+      "sections": ["Pre-Travel Checklist", "Common Issues and Solutions", "Advanced Troubleshooting", "Emergency Roaming"]
+    },
+    {
+      "id": "device-compatibility",
+      "title": "Device Compatibility Guide",
+      "path": "device/device-compatibility-guide.md",
+      "category": "device",
+      "tags": ["device", "compatibility", "bands", "byod", "imei", "unlock", "esim", "volte"],
+      "sections": ["Network Band Requirements", "BYOD (Bring Your Own Device) Compatibility", "Device Setup", "Known Device Issues", "Device Care"]
+    },
+    {
+      "id": "sim-card-management",
+      "title": "SIM Card Management Guide",
+      "path": "device/sim-card-management.md",
+      "category": "device",
+      "tags": ["sim", "esim", "puk", "provisioning", "replacement", "swap", "security"],
+      "sections": ["SIM Card Types", "SIM Card Provisioning", "SIM Card Troubleshooting", "SIM Security"]
+    },
+    {
+      "id": "device-financing",
+      "title": "Device Financing Program",
+      "path": "device/device-financing.md",
+      "category": "device",
+      "tags": ["financing", "installment", "payment", "payoff", "trade-in", "insurance", "default"],
+      "sections": ["Overview", "Financing Terms", "Financing Agreement", "Early Payoff", "Device Return and Exchange", "Default and Collections", "Device Insurance"]
+    },
+    {
+      "id": "customer-service-standards",
+      "title": "Customer Service Standards",
+      "path": "support/customer-service-standards.md",
+      "category": "support",
+      "tags": ["customer service", "response time", "quality", "communication", "training", "sla"],
+      "sections": ["Response Time Requirements", "Communication Standards", "Escalation Standards", "Quality Assurance"]
+    },
+    {
+      "id": "ticket-management",
+      "title": "Ticket Management Procedures",
+      "path": "support/ticket-management.md",
+      "category": "support",
+      "tags": ["ticket", "lifecycle", "priority", "categories", "status", "resolution", "closure"],
+      "sections": ["Ticket Lifecycle", "Ticket Priority", "Ticket Categories", "Ticket Communication"]
+    },
+    {
+      "id": "account-security",
+      "title": "Account Security Procedures",
+      "path": "support/account-security.md",
+      "category": "support",
+      "tags": ["security", "pin", "verification", "account takeover", "privacy", "data protection"],
+      "sections": ["Identity Verification", "Account PIN", "Account Takeover Prevention", "Device Security", "Data Privacy"]
+    },
+    {
+      "id": "technical-troubleshooting",
+      "title": "Technical Troubleshooting Guide",
+      "path": "support/technical-troubleshooting.md",
+      "category": "support",
+      "tags": ["troubleshooting", "voice", "data", "messaging", "calls", "sms", "mms", "billing"],
+      "sections": ["Voice Call Issues", "Data Issues", "Messaging Issues", "Account and Billing Issues"]
+    },
+    {
+      "id": "customer-retention",
+      "title": "Customer Retention Guide",
+      "path": "support/customer-retention.md",
+      "category": "support",
+      "tags": ["retention", "cancellation", "loyalty", "win-back", "churn", "offers"],
+      "sections": ["Overview", "Retention Triggers", "Retention Strategies", "Retention Offer Matrix", "Cancellation Processing", "Win-Back Program"]
+    },
+    {
+      "id": "escalation-procedures",
+      "title": "Escalation Procedures",
+      "path": "escalation/escalation-procedures.md",
+      "category": "escalation",
+      "tags": ["escalation", "tier", "noc", "engineering", "vendor", "sla", "time-based"],
+      "sections": ["Overview", "Escalation Tiers", "Escalation Triggers", "Escalation Process", "Escalation Contacts", "Escalation Documentation"]
+    },
+    {
+      "id": "sla-management",
+      "title": "SLA Management and Compliance",
+      "path": "escalation/sla-management.md",
+      "category": "escalation",
+      "tags": ["sla", "compliance", "uptime", "response time", "resolution", "breach", "credit"],
+      "sections": ["Overview", "SLA Categories", "SLA Measurement", "SLA Breach Response", "SLA Reporting", "SLA Optimization"]
+    },
+    {
+      "id": "complaint-handling",
+      "title": "Complaint Handling Procedures",
+      "path": "escalation/complaint-handling.md",
+      "category": "escalation",
+      "tags": ["complaint", "resolution", "escalation", "quality", "billing", "service"],
+      "sections": ["Overview", "Complaint Categories", "Complaint Handling Process", "Complaint Prioritization", "Complaint Resolution Standards", "Complaint Escalation"]
+    },
+    {
+      "id": "enterprise-sla",
+      "title": "Enterprise Service Level Agreements",
+      "path": "enterprise/enterprise-service-level-agreements.md",
+      "category": "enterprise",
+      "tags": ["enterprise", "sla", "availability", "platinum", "gold", "silver", "credits", "performance"],
+      "sections": ["Overview", "SLA Tiers", "Availability Measurement", "Performance Guarantees", "Credit Structure", "Support SLAs", "Reporting and Review"]
+    },
+    {
+      "id": "enterprise-support",
+      "title": "Enterprise Support Operations",
+      "path": "enterprise/enterprise-support-operations.md",
+      "category": "enterprise",
+      "tags": ["enterprise", "support", "account management", "tam", "proactive", "monitoring", "managed services"],
+      "sections": ["Overview", "Enterprise Support Structure", "Proactive Monitoring", "Incident Management for Enterprise", "Custom Solutions", "Enterprise Billing"]
+    },
+    {
+      "id": "enterprise-account-management",
+      "title": "Enterprise Account Management",
+      "path": "enterprise/enterprise-account-management.md",
+      "category": "enterprise",
+      "tags": ["enterprise", "account", "onboarding", "renewal", "business review", "health score"],
+      "sections": ["Overview", "Enterprise Account Lifecycle", "Account Management Team", "Business Reviews", "Account Health Monitoring", "Communication Channels", "Account Documentation"]
+    }
+  ]
+}

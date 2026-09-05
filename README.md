@@ -1,4 +1,4 @@
-TRACK_ID=PS04
+TRACK_ID=PS6
 
 # SmartResolve
 
@@ -15,52 +15,72 @@ The system resolves what the available evidence supports, asks for missing infor
 | Backend | Python, FastAPI, Uvicorn, Pydantic |
 | Frontend | React, TypeScript, Vite, Tailwind CSS, React Router |
 | Database | SQLite |
+| Knowledge Base | Markdown documents, deterministic chunking, lexical search |
 | AI/LLM | Gemini (planned) |
-| RAG | FAISS, NumPy (planned) |
 
-## Current Implementation (Stage 4 - Case Investigation Workflow)
+## Current Implementation (Stage 5 - Grounded Knowledge Base)
 
-This release adds the complete case investigation workflow:
+This release adds the complete grounded knowledge base foundation:
 
-- **Case List** with search (ticket number, customer name/number, subject), status/priority/category filters, pagination, desktop table and mobile card layouts
-- **Case Detail** investigation workspace with customer profile, service/subscription, network context, active incidents, previous tickets, ticket timeline, customer interactions
-- **Investigation Service** with deterministic readiness calculation, known facts extraction, and missing information identification
-- **Deterministic Investigation Rules** that correlate ticket category with network status, identify regional incidents, and flag repeated customer issues
-- **Partial Data Handling** - system works gracefully with incomplete data (missing subscription, no network site, no incidents)
-- **Readiness Indicator** - READY / PARTIAL / INSUFFICIENT DATA based on available context
-- **React Router** navigation between case list and case detail views
+- **30 Knowledge Documents** across 8 categories: Network, Connectivity, Billing, Roaming, Device, Support, Escalation, Enterprise
+- **Deterministic Chunking** - documents are split into 300-700 word chunks with section context preserved
+- **Lexical Search** - searches across titles, categories, tags, section headings, and content
+- **Knowledge API** - list, get, search, categories, sections, and chunks endpoints
+- **Knowledge UI** - browse documents by category, search across the knowledge base, read documents with table of contents navigation
+- **Citation-Ready Chunks** - every chunk is traceable to its source document, section, and chunk index
+- **Category Routing** - maps ticket categories to relevant knowledge base categories
+- **No External Dependencies** - no Gemini, no embeddings, no FAISS, no vector search
 
-### Investigation Readiness Logic
+### Knowledge Categories
 
-- **READY**: Customer exists, ticket exists, subscription linked, network site available
-- **PARTIAL**: Core ticket/customer exists but subscription or network context missing
-- **INSUFFICIENT DATA**: Critical context missing (e.g., customer record not found)
+| Category | Documents | Topics |
+|----------|-----------|--------|
+| Network | 5 | Incident response, health monitoring, cell site operations, technology overview, spectrum management |
+| Connectivity | 5 | Mobile data troubleshooting, Wi-Fi calling, APN configuration, service activation, coverage issues |
+| Billing | 4 | Billing cycles, data throttling, invoice disputes, payment methods |
+| Support | 5 | Customer service standards, ticket management, account security, technical troubleshooting, retention |
+| Escalation | 3 | Escalation procedures, SLA management, complaint handling |
+| Enterprise | 3 | Enterprise SLAs, support operations, account management |
+| Device | 3 | Device compatibility, SIM management, device financing |
+| Roaming | 2 | Roaming policies, international troubleshooting |
 
 ### Deterministic Rules
 
-- Network site status "degraded" flagged as relevant to customer issue
-- Active incidents in customer's region identified as potentially related
-- Previous tickets in same category counted and surfaced
-- Data overage detected when usage exceeds plan limit
-- Site capacity above 85% flagged as high utilization
+- Documents are chunked by section headings (## level)
+- Chunks target 300-700 words for optimal retrieval
+- Search scores: title matches (10x), category matches (5x), heading matches (8x), content matches (1x)
+- Category routing maps ticket types to relevant knowledge categories
+- All chunks include citation metadata: document_id, section_heading, chunk_index
 
-### Known vs Missing Information
+### Search and Retrieval
 
-The system extracts what it knows from the database and identifies gaps:
-- Known: customer, subscription, plan, network site, incidents, ticket history, interactions
-- Missing: device model, exact location, signal strength, symptom details
+- Lexical search across all document content, headings, titles, tags, and categories
+- Results ranked by relevance score with preview snippets
+- Category filtering available for scoped searches
+- No embeddings, no vectors, no external AI services required
 
-This prepares context for future AI reasoning without hallucinating data.
+## Previous Stages
 
-### Case Investigation Scenarios
+### Stage 4 - Case Investigation Workflow
 
-The seed data supports testing these scenarios:
-- Network issue with active regional incident
-- Network issue without active incident
-- Billing issue with healthy network
-- Customer with repeated tickets in same category
-- High data usage exceeding plan limits
-- Enterprise vs consumer customer handling
+- Case List with search, filters, pagination, desktop table and mobile card layouts
+- Case Detail investigation workspace with customer profile, service, network, incidents, history
+- Investigation Service with deterministic readiness calculation and known/missing facts
+- Partial Data Handling and Readiness Indicator (READY / PARTIAL / INSUFFICIENT DATA)
+
+### Stage 3 - Operations Dashboard
+
+- KPI cards, network health, ticket workload, active incidents, regional impact
+- Priority cases with scoring, recent activity feed
+
+### Stage 2 - Telecom Data Layer
+
+- 9-table SQLite schema with 55 customers, 8 plans, 63 subscriptions, 18 network sites
+- 42 network events, 12 incidents, 110 tickets, 631 ticket events, 631 interactions
+
+### Stage 1 - Foundation
+
+- FastAPI backend, React frontend, Tailwind CSS, single entry point
 
 ## Database Schema
 
@@ -99,6 +119,11 @@ The seed data supports testing these scenarios:
 | GET | `/api/tickets/{id}` | Ticket detail with history |
 | GET | `/api/tickets/{id}/history` | Ticket event history |
 | GET | `/api/cases/{id}/investigation` | Case investigation context |
+| GET | `/api/knowledge` | List knowledge documents |
+| GET | `/api/knowledge/categories` | List knowledge categories |
+| GET | `/api/knowledge/search?q=` | Search knowledge base |
+| GET | `/api/knowledge/{id}` | Knowledge document detail |
+| GET | `/api/knowledge/{id}/chunks` | Document chunks for citation |
 
 All collection endpoints support `page` and `page_size` query parameters.
 
@@ -147,14 +172,26 @@ SmartResolve/
 │   │       └── plan_repository.py
 │   ├── services/
 │   │   ├── dashboard_service.py
-│   │   └── case_investigation_service.py
+│   │   ├── case_investigation_service.py
+│   │   └── knowledge_service.py
+│   ├── retrieval/
+│   │   ├── __init__.py
+│   │   ├── knowledge_loader.py
+│   │   └── chunker.py
 │   ├── ai/                 # (planned)
-│   ├── retrieval/          # (planned)
 │   └── rules/              # (planned)
 ├── data/
 │   └── smartresolve.db
-├── knowledge/              # (planned)
-├── index/                  # (planned)
+├── knowledge/
+│   ├── manifest.json
+│   ├── network/            # 5 documents
+│   ├── connectivity/       # 5 documents
+│   ├── billing/            # 4 documents
+│   ├── roaming/            # 2 documents
+│   ├── device/             # 3 documents
+│   ├── support/            # 5 documents
+│   ├── escalation/         # 3 documents
+│   └── enterprise/         # 3 documents
 └── frontend/
     ├── src/
     │   ├── components/
@@ -163,11 +200,14 @@ SmartResolve/
     │   ├── pages/
     │   │   ├── Overview.tsx
     │   │   ├── Cases.tsx
-    │   │   └── CaseDetail.tsx
+    │   │   ├── CaseDetail.tsx
+    │   │   ├── Knowledge.tsx
+    │   │   └── KnowledgeDetail.tsx
     │   ├── services/api.ts
     │   └── types/
     │       ├── index.ts
-    │       └── case.ts
+    │       ├── case.ts
+    │       └── knowledge.ts
     └── dist/
 ```
 
@@ -183,18 +223,16 @@ Never hard-code or commit API keys.
 ## Current Limitations
 
 - No Gemini AI integration yet
-- No RAG or FAISS retrieval yet
 - No resolution engine or escalation logic
-- No knowledge base documents
 - Evidence and citations page is a placeholder
+- Knowledge base uses lexical search only (no semantic search)
 
 ## Future Stages
 
-- Stage 5: RAG retrieval with FAISS
 - Stage 6: Deterministic business rules
-- Stage 7: Resolution engine
-- Stage 8: Escalation logic
-- Stage 9: Evidence scoring
+- Stage 7: Gemini reasoning engine
+- Stage 8: RAG retrieval with FAISS
+- Stage 9: Evidence scoring and citations
 - Stage 10: Final polish and testing
 
 ## Local URL

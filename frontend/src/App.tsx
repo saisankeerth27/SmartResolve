@@ -3,6 +3,8 @@ import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-ro
 import { OverviewPage } from './pages/Overview'
 import { CasesPage } from './pages/Cases'
 import { CaseDetailPage } from './pages/CaseDetail'
+import { KnowledgePage } from './pages/Knowledge'
+import { KnowledgeDetailPage } from './pages/KnowledgeDetail'
 
 type NavItem = {
   id: string
@@ -127,7 +129,7 @@ function Header({ setSidebarOpen }: { sidebarOpen: boolean; setSidebarOpen: (v: 
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          Data Layer v0.4
+          Data Layer v0.5
         </div>
         <div className="w-8 h-8 rounded-full bg-surface-200 flex items-center justify-center text-surface-600 text-xs font-medium" aria-label="Operator avatar">
           OP
@@ -244,28 +246,6 @@ function OperationsPage() {
   )
 }
 
-function KnowledgePage() {
-  return (
-    <div className="space-y-4">
-      <div>
-        <h2 className="text-lg font-semibold text-surface-900">Knowledge Base</h2>
-        <p className="text-sm text-surface-500 mt-0.5">Telecom policies, runbooks, and operational documents.</p>
-      </div>
-      <div className="bg-white rounded-xl border border-surface-200 p-8 text-center">
-        <div className="w-16 h-16 rounded-full bg-surface-100 flex items-center justify-center mx-auto mb-4">
-          <svg className="w-8 h-8 text-surface-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-          </svg>
-        </div>
-        <h4 className="text-sm font-medium text-surface-700 mb-1">Knowledge Base</h4>
-        <p className="text-xs text-surface-500 max-w-sm mx-auto">
-          Telecom policies, runbooks, and operational documents will be indexed here using local RAG retrieval in a future stage.
-        </p>
-      </div>
-    </div>
-  )
-}
-
 function EvidencePage() {
   return (
     <div className="space-y-4">
@@ -307,6 +287,7 @@ function Layout() {
               <Route path="/customers" element={<CustomersPage />} />
               <Route path="/operations" element={<OperationsPage />} />
               <Route path="/knowledge" element={<KnowledgePage />} />
+              <Route path="/knowledge/:documentId" element={<KnowledgeDetailPage />} />
               <Route path="/evidence" element={<EvidencePage />} />
             </Routes>
           </div>

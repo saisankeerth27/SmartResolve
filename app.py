@@ -32,5 +32,5 @@ app.include_router(router)
 serve_frontend(app)
 
 if __name__ == "__main__":
-    logger.info("Starting SmartResolve on %s:%d", HOST, PORT)
+    logger.info("Starting SmartResolve at http://localhost:%d", PORT)
     uvicorn.run(app, host=HOST, port=PORT)
