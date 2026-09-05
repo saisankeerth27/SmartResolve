@@ -1,4 +1,4 @@
-TRACK_ID=PS6
+TRACK_ID=PS04
 
 # SmartResolve
 
@@ -164,7 +164,7 @@ The Agent Console provides a professional 3-panel support workspace:
 | Panel | Content |
 |-------|---------|
 | **Left** | Support Queue with case ID, customer, issue, priority, mode/status indicators |
-| **Center** | Case workspace with Analyze button, mode-specific display, classification details, audit trail |
+| **Center** | Case workspace with Analyze button, mode-specific display, customer conversation transcript, classification details, audit trail |
 | **Right** | Customer/account context with service, network, incidents, investigation status |
 
 ### Mode Displays
@@ -176,6 +176,22 @@ The Agent Console provides a professional 3-panel support workspace:
 ### Queue Filters
 
 - All, Routine, Needs Information, Human Review, Pending Approval, Resolved, Analyzing
+
+## Customer Chat
+
+The primary entry point for customers. Select a customer, start a conversation, describe the issue.
+
+Every customer message goes through the existing deterministic classification pipeline:
+
+```
+Customer message → retrieve → classify → Mode A/B/C → response
+```
+
+- **Mode A:** Grounded recommendation prepared for agent approval
+- **Mode B:** One targeted clarification question asked
+- **Mode C:** Calm handoff message, full escalation package created
+
+Agent Console immediately shows the case with full conversation transcript, customer context, and mode-specific actions.
 
 ## API Endpoints
 
@@ -213,6 +229,13 @@ The Agent Console provides a professional 3-panel support workspace:
 | GET | `/api/cases/{id}/audit` | **Full audit trail** |
 | GET | `/api/cases/{id}/handover` | **Escalation handover package** |
 | GET | `/api/queue` | **Support queue with filters** |
+| POST | `/api/chat/send` | **Send customer message through Mode A/B/C pipeline** |
+| GET | `/api/chat/conversations/{id}` | **Customer conversations** |
+| GET | `/api/chat/messages/{id}` | **Conversation messages** |
+| GET | `/api/chat/ticket-messages/{id}` | **Messages for a ticket (agent view)** |
+| GET | `/api/chat/customers` | **Customer list for chat** |
+| POST | `/api/cases/{id}/need-info` | **Request more information** |
+| POST | `/api/cases/{id}/reopen` | **Reopen resolved/dismissed case** |
 | GET | `/api/knowledge` | List knowledge documents |
 | GET | `/api/knowledge/categories` | Knowledge categories |
 | GET | `/api/knowledge/search?q=` | Search knowledge base |
@@ -231,7 +254,7 @@ The system includes 5 pre-seeded demo cases:
 | TKT-DEMO-004 | Conflict | Site shows operational but has high-severity events |
 | TKT-DEMO-005 | Edge Case | Missing subscription data |
 
-## Database Schema (16 Tables)
+## Database Schema (18 Tables)
 
 | Entity | Description |
 |--------|-------------|
@@ -250,6 +273,8 @@ The system includes 5 pre-seeded demo cases:
 | `clarification_requests` | Mode B clarification questions and answers |
 | `escalation_records` | Mode C escalation handover packages |
 | `audit_events` | Full audit trail for all case actions |
+| `conversations` | Customer chat conversations linked to tickets |
+| `conversation_messages` | Individual messages in customer conversations |
 
 ## Architecture
 
@@ -314,10 +339,12 @@ The database is automatically initialized and seeded with India-focused syntheti
 ## Running Tests
 
 ```bash
-python -m tests.test_decision_engine
+python -m pytest tests/ -v
 ```
 
-Tests the deterministic Mode A/B/C classification without requiring Gemini.
+- **33 unit tests:** Classification engine, escalation matrix, conflict detection, state machine, clarification, missing info
+- **7 E2E workflow tests:** Mode A/B/C lifecycle, reopen, invalid transitions, audit trail, classification modes
+- Classification tests do NOT depend on Gemini
 
 ## Environment Variables
 
@@ -340,7 +367,18 @@ Never hard-code or commit API keys.
 - **Transparent confidence** — confidence reasons are explicit and auditable
 - **Graceful degradation** — works without Gemini, without FAISS, without complete data
 - **Complete handover** — specialists understand the full problem without asking customer to repeat
+- **Database is source of truth** — every mutation persists to SQLite with history and audit
 - **Synthetic data only** — all customer records are fictional; real provider names used as labels only
+
+## Demo Flow
+
+1. Open `http://localhost:8000`
+2. Go to **New Conversation**, select a customer, describe an issue
+3. SmartResolve classifies and responds (Mode A/B/C)
+4. Go to **Agent Console**, see the case in the queue with full transcript
+5. Run analysis, review the recommendation/clarification/escalation
+6. Take action: Approve → Resolve, or Need Info, or Dismiss, or Escalate
+7. Verify the queue, overview, audit trail, and history all update immediately
 
 ## Local URL
 

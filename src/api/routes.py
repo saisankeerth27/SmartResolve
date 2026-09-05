@@ -72,7 +72,7 @@ from src.services.resolution_service import resolve_case
 from src.services.analysis_service import analyze_ticket
 from src.tickets import transition_case, get_current_state, get_state_history, InvalidTransitionError
 from src.clarify import record_clarification_answer, get_clarification_count
-from src.audit import get_audit_trail
+from src.audit import get_audit_trail, record_event
 from src.escalate import build_handover
 
 logger = logging.getLogger(__name__)
@@ -822,8 +822,8 @@ async def approve_recommendation(ticket_id: int, body: dict | None = None):
         current = get_current_state(conn, ticket_id)
         notes = (body or {}).get("notes", "")
 
-        if current not in ("pending_agent_approval", "human_review"):
-            raise HTTPException(status_code=400, detail=f"Cannot approve: case is in '{current}' state. Expected 'pending_agent_approval' or 'human_review'.")
+        if current not in ("pending_agent_approval", "human_review", "escalation_requested"):
+            raise HTTPException(status_code=400, detail=f"Cannot approve: case is in '{current}' state.")
 
         transition = transition_case(conn, ticket_id, current, "approved", "agent", notes or "Recommendation approved by agent")
 
@@ -983,7 +983,7 @@ async def resolve_case_final(ticket_id: int, body: dict | None = None):
 
 @router.post("/cases/{ticket_id}/reopen")
 async def reopen_case(ticket_id: int, body: dict | None = None):
-    """Reopen a dismissed or resolved case back to analyzing."""
+    """Reopen a dismissed or resolved case."""
     conn = get_connection()
     try:
         repo = TicketRepository(conn)
@@ -992,15 +992,18 @@ async def reopen_case(ticket_id: int, body: dict | None = None):
             raise HTTPException(status_code=404, detail="Ticket not found")
 
         current = get_current_state(conn, ticket_id)
-        reason = (body or {}).get("reason", "Case reopened for further investigation")
+        reason = (body or {}).get("reason", "Case reopened")
 
         if current not in ("dismissed", "resolved"):
             raise HTTPException(status_code=400, detail=f"Cannot reopen: case is in '{current}' state.")
 
         transition = transition_case(conn, ticket_id, current, "open", "agent", reason)
 
-        from src.audit import record_event
-        record_event(conn, ticket_id, "case_reopened", {"reason": reason, "previous_state": current}, "agent")
+        try:
+            record_event(conn, ticket_id, "case_reopened", {"reason": reason}, "agent")
+            conn.commit()
+        except Exception:
+            conn.rollback()
 
         new_state = get_current_state(conn, ticket_id)
         history = get_state_history(conn, ticket_id)
@@ -1010,7 +1013,45 @@ async def reopen_case(ticket_id: int, body: dict | None = None):
             "case_id": ticket_id,
             "new_status": new_state,
             "transition": transition,
-            "message": "Case reopened for investigation.",
+            "message": "Case reopened.",
+            "state_history": history,
+        }
+    except InvalidTransitionError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    finally:
+        conn.close()
+
+
+@router.post("/cases/{ticket_id}/need-info")
+async def need_info_case(ticket_id: int, body: dict | None = None):
+    """Agent requests more information from the customer."""
+    conn = get_connection()
+    try:
+        repo = TicketRepository(conn)
+        ticket = repo.get_by_id(ticket_id)
+        if not ticket:
+            raise HTTPException(status_code=404, detail="Ticket not found")
+
+        current = get_current_state(conn, ticket_id)
+        reason = (body or {}).get("reason", "Additional information needed")
+
+        if current not in ("pending_agent_approval", "human_review", "escalation_requested", "approved"):
+            raise HTTPException(status_code=400, detail=f"Cannot request info: case is in '{current}' state.")
+
+        transition = transition_case(conn, ticket_id, current, "needs_information", "agent", reason)
+
+        record_event(conn, ticket_id, "needs_information", {"reason": reason}, "agent")
+        conn.commit()
+
+        new_state = get_current_state(conn, ticket_id)
+        history = get_state_history(conn, ticket_id)
+
+        return {
+            "success": True,
+            "case_id": ticket_id,
+            "new_status": new_state,
+            "transition": transition,
+            "message": "Information requested from customer.",
             "state_history": history,
         }
     except InvalidTransitionError as e:
@@ -1146,6 +1187,94 @@ async def get_support_queue(
         conn.close()
 
 
+# ── Customer Chat ──────────────────────────────────────
+
+@router.post("/chat/send")
+async def chat_send(body: dict):
+    """Process a customer message through Mode A/B/C pipeline."""
+    customer_id = body.get("customer_id")
+    conversation_id = body.get("conversation_id")
+    content = body.get("content", "").strip()
+
+    if not customer_id:
+        raise HTTPException(status_code=400, detail="customer_id is required")
+    if not content:
+        raise HTTPException(status_code=400, detail="content is required")
+
+    from src.chat import get_or_create_conversation, send_customer_message
+
+    if not conversation_id:
+        conv = get_or_create_conversation(customer_id)
+        conversation_id = conv.id
+
+    result = send_customer_message(conversation_id, customer_id, content)
+    if "error" in result:
+        raise HTTPException(status_code=400, detail=result["error"])
+    return result
+
+
+@router.get("/chat/conversations/{customer_id}")
+async def get_conversations(customer_id: int):
+    """Get all conversations for a customer."""
+    from src.chat import get_customer_conversations
+    convs = get_customer_conversations(customer_id)
+    return {
+        "conversations": [
+            {
+                "id": c.id, "ticket_id": c.ticket_id, "customer_id": c.customer_id,
+                "ticket_number": c.ticket_number, "customer_name": c.customer_name,
+                "subject": c.subject, "status": c.status,
+                "created_at": c.created_at, "updated_at": c.updated_at,
+            }
+            for c in convs
+        ]
+    }
+
+
+@router.get("/chat/messages/{conversation_id}")
+async def get_chat_messages(conversation_id: int):
+    """Get all messages for a conversation."""
+    from src.chat import get_conversation_messages
+    msgs = get_conversation_messages(conversation_id)
+    return {
+        "messages": [
+            {"id": m.id, "sender": m.sender, "content": m.content, "mode": m.mode, "created_at": m.created_at}
+            for m in msgs
+        ]
+    }
+
+
+@router.get("/chat/ticket-messages/{ticket_id}")
+async def get_ticket_messages(ticket_id: int):
+    """Get conversation messages for a ticket (used by AgentConsole)."""
+    from src.chat import get_ticket_conversation
+    msgs = get_ticket_conversation(ticket_id)
+    return {
+        "messages": [
+            {"id": m.id, "sender": m.sender, "content": m.content, "mode": m.mode, "created_at": m.created_at}
+            for m in msgs
+        ]
+    }
+
+
+@router.get("/chat/customers")
+async def list_chat_customers():
+    """List customers available for chat."""
+    conn = get_connection()
+    try:
+        rows = conn.execute(
+            "SELECT id, customer_number, name, segment, status FROM customers WHERE status = 'active' ORDER BY name LIMIT 55"
+        ).fetchall()
+        return {
+            "customers": [
+                {"id": r[0], "customer_number": r[1], "name": r[2], "segment": r[3], "status": r[4]}
+                for r in rows
+            ]
+        }
+    finally:
+        conn.close()
+
+
 # ── Frontend Serving ────────────────────────────────────
 
 def serve_frontend(app) -> None:
@@ -1167,7 +1296,7 @@ def serve_frontend(app) -> None:
 
     @app.get("/{full_path:path}")
     async def serve_frontend_assets(full_path: str):
-        file_path = dist / full_path
-        if file_path.is_file():
+        file_path = (dist / full_path).resolve()
+        if file_path.is_file() and str(file_path).startswith(str(dist.resolve())):
             return FileResponse(file_path)
         return FileResponse(index_file)

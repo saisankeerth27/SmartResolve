@@ -120,10 +120,14 @@ export function CasesPage() {
         >
           <option value="">All Statuses</option>
           <option value="open">Open</option>
-          <option value="in_progress">In Progress</option>
-          <option value="pending_customer">Pending Customer</option>
-          <option value="escalated">Escalated</option>
+          <option value="analyzing">Analyzing</option>
+          <option value="pending_agent_approval">Pending Approval</option>
+          <option value="needs_information">Needs Information</option>
+          <option value="escalation_requested">Escalation Requested</option>
+          <option value="human_review">Human Review</option>
+          <option value="approved">Approved</option>
           <option value="resolved">Resolved</option>
+          <option value="dismissed">Dismissed</option>
         </select>
         <select
           value={priority}

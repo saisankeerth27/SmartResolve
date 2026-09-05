@@ -519,6 +519,12 @@ function ResolutionDraft({
           Approve Recommendation
         </button>
         <button
+          onClick={() => onAction('need-info', { reason: notes })}
+          className="px-3 py-2 text-xs font-medium text-amber-700 bg-amber-50 rounded-lg hover:bg-amber-100 transition-colors"
+        >
+          Need Info
+        </button>
+        <button
           onClick={() => onAction('dismiss', { reason: notes })}
           className="px-3 py-2 text-xs font-medium text-surface-600 bg-surface-100 rounded-lg hover:bg-surface-200 transition-colors"
         >
@@ -765,6 +771,9 @@ export default function AgentConsolePage() {
   const [auditEvents, setAuditEvents] = useState<AuditEvent[]>([])
   const [analyzing, setAnalyzing] = useState(false)
   const [errors, setErrors] = useState<string[]>([])
+  const [conversation, setConversation] = useState<Array<{sender: string; content: string; mode?: string | null; created_at?: string}>>([])
+  const [showConversation, setShowConversation] = useState(false)
+  const [refreshKey, setRefreshKey] = useState(0)
 
   const loadCase = useCallback(async (ticketId: number) => {
     setSelectedId(ticketId)
@@ -772,6 +781,7 @@ export default function AgentConsolePage() {
     setInvestigation(null)
     setAuditEvents([])
     setErrors([])
+    setConversation([])
 
     try {
       const invRes = await fetch(`/api/cases/${ticketId}/investigation`)
@@ -781,6 +791,18 @@ export default function AgentConsolePage() {
       }
     } catch {
       // Investigation failed
+    }
+
+    try {
+      const convRes = await fetch(`/api/chat/ticket-messages/${ticketId}`)
+      if (convRes.ok) {
+        const convData = await convRes.json()
+        const msgs = convData.messages || []
+        setConversation(msgs)
+        setShowConversation(msgs.length > 0)
+      }
+    } catch {
+      // Conversation not available
     }
   }, [])
 
@@ -836,8 +858,7 @@ export default function AgentConsolePage() {
         // Refresh the case
         await loadCase(selectedId)
         setAnalysis(null)
-        // Trigger queue refresh by updating filter
-        setFilter(f => f)
+        setRefreshKey(k => k + 1)
       } else if (!res.ok) {
         setErrors([result.detail || 'Action failed'])
       }
@@ -870,6 +891,7 @@ export default function AgentConsolePage() {
       {/* Left: Support Queue */}
       <div className="w-72 border-r border-surface-200 bg-white shrink-0 hidden md:flex flex-col">
         <SupportQueue
+          key={refreshKey}
           selectedId={selectedId}
           onSelect={loadCase}
           filter={filter}
@@ -949,6 +971,42 @@ export default function AgentConsolePage() {
                   {errors.map((err, i) => (
                     <p key={i} className="text-[10px] text-red-600">• {err}</p>
                   ))}
+                </div>
+              )}
+
+              {/* Conversation Transcript */}
+              {conversation.length > 0 && (
+                <div className="bg-white border border-surface-200 rounded-lg overflow-hidden">
+                  <button
+                    onClick={() => setShowConversation(!showConversation)}
+                    className="w-full px-3 py-2 flex items-center justify-between text-xs font-semibold text-surface-700 hover:bg-surface-50 transition-colors"
+                  >
+                    <span>Customer Conversation ({conversation.length} messages)</span>
+                    <svg className={`w-4 h-4 transition-transform ${showConversation ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  {showConversation && (
+                    <div className="border-t border-surface-100 p-3 space-y-2 max-h-64 overflow-y-auto">
+                      {conversation.map((msg, i) => (
+                        <div key={i} className={`flex ${msg.sender === 'customer' ? 'justify-end' : 'justify-start'}`}>
+                          <div className={`max-w-[80%] rounded-lg px-3 py-2 text-xs ${
+                            msg.sender === 'customer'
+                              ? 'bg-blue-50 text-blue-900 border border-blue-100'
+                              : msg.sender === 'assistant'
+                              ? 'bg-surface-50 text-surface-800 border border-surface-200'
+                              : 'bg-surface-100 text-surface-500 italic'
+                          }`}>
+                            <div className="font-medium text-[10px] uppercase mb-0.5">
+                              {msg.sender === 'customer' ? 'Customer' : msg.sender === 'assistant' ? 'SmartResolve' : 'System'}
+                              {msg.mode && <span className="ml-1 text-[9px] opacity-60">[Mode {msg.mode}]</span>}
+                            </div>
+                            <div className="whitespace-pre-wrap">{msg.content}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 

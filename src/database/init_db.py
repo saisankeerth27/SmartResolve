@@ -189,6 +189,24 @@ CREATE TABLE IF NOT EXISTS audit_events (
     created_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS conversations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ticket_id INTEGER NOT NULL REFERENCES tickets(id),
+    customer_id INTEGER NOT NULL REFERENCES customers(id),
+    status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'closed')),
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS conversation_messages (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    conversation_id INTEGER NOT NULL REFERENCES conversations(id),
+    sender TEXT NOT NULL CHECK (sender IN ('customer', 'assistant', 'system')),
+    content TEXT NOT NULL,
+    mode TEXT CHECK (mode IN ('A', 'B', 'C')),
+    created_at TEXT NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS idx_customers_number ON customers(customer_number);
 CREATE INDEX IF NOT EXISTS idx_customers_status ON customers(status);
 CREATE INDEX IF NOT EXISTS idx_customers_segment ON customers(segment);
@@ -215,6 +233,9 @@ CREATE INDEX IF NOT EXISTS idx_escalation_ticket ON escalation_records(ticket_id
 CREATE INDEX IF NOT EXISTS idx_escalation_status ON escalation_records(status);
 CREATE INDEX IF NOT EXISTS idx_audit_ticket ON audit_events(ticket_id);
 CREATE INDEX IF NOT EXISTS idx_audit_event_type ON audit_events(event_type);
+CREATE INDEX IF NOT EXISTS idx_conversations_ticket ON conversations(ticket_id);
+CREATE INDEX IF NOT EXISTS idx_conversations_customer ON conversations(customer_id);
+CREATE INDEX IF NOT EXISTS idx_conv_messages_conversation ON conversation_messages(conversation_id);
 """
 
 
