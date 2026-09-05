@@ -338,8 +338,19 @@ def test_valid_transition_analyzing_to_escalation():
 
 
 def test_invalid_transition():
-    """new → resolved is invalid."""
-    assert not validate_transition("new", "resolved")
+    """Automated workflow states cannot be bypassed through the strict pipeline."""
+    assert not validate_transition("new", "approved")
+    assert not validate_transition("new", "human_review")
+    assert not validate_transition("new", "dismissed")
+    assert not validate_transition("open", "dismissed")
+    assert not validate_transition("analyzing", "approved")
+
+
+def test_agent_can_resolve_or_close_any_case():
+    """Agents may mark a case resolved or closed directly from any workflow state."""
+    for state in ("new", "open", "analyzing", "needs_information", "pending_agent_approval"):
+        assert validate_transition(state, "resolved")
+        assert validate_transition(state, "closed")
 
 
 def test_invalid_transition_resolved_to_anything():

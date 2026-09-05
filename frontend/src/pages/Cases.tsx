@@ -46,6 +46,27 @@ function formatTimeAgo(dateStr: string) {
   }
 }
 
+const VALID_TARGETS: Record<string, string[]> = {
+  open: ['analyzing', 'in_progress', 'needs_information', 'pending_customer', 'resolved', 'escalated', 'closed'],
+  new: ['analyzing', 'in_progress', 'needs_information', 'pending_customer', 'resolved', 'escalated', 'closed'],
+  analyzing: ['needs_information', 'pending_agent_approval', 'escalation_requested', 'in_progress', 'pending_customer', 'resolved', 'escalated', 'closed'],
+  needs_information: ['analyzing', 'escalation_requested', 'dismissed', 'open', 'in_progress', 'pending_customer', 'resolved', 'escalated', 'closed'],
+  pending_agent_approval: ['approved', 'dismissed', 'escalation_requested', 'needs_information', 'in_progress', 'pending_customer', 'resolved', 'closed'],
+  escalation_requested: ['human_review', 'dismissed', 'needs_information', 'approved', 'in_progress', 'pending_customer', 'resolved', 'escalated', 'closed'],
+  human_review: ['approved', 'dismissed', 'needs_information', 'in_progress', 'pending_customer', 'resolved', 'closed'],
+  approved: ['resolved', 'needs_information', 'in_progress', 'pending_customer', 'closed'],
+  dismissed: ['open', 'in_progress', 'closed'],
+  in_progress: ['open', 'needs_information', 'pending_customer', 'resolved', 'escalated', 'closed'],
+  pending_customer: ['open', 'in_progress', 'needs_information', 'resolved', 'closed'],
+  escalated: ['human_review', 'open', 'in_progress', 'closed'],
+  resolved: ['open', 'in_progress', 'closed'],
+  closed: ['open', 'in_progress', 'resolved'],
+}
+
+function statusOptions(current: string) {
+  return Array.from(new Set([current, ...(VALID_TARGETS[current] || [])]))
+}
+
 export function CasesPage() {
   const navigate = useNavigate()
   const [search, setSearch] = useState('')
@@ -269,7 +290,7 @@ export function CasesPage() {
                             onClick={event => event.stopPropagation()}
                             className="ml-2 px-2 py-1.5 text-[11px] border border-surface-200 rounded-lg bg-white"
                           >
-                            {['open', 'in_progress', 'needs_information', 'pending_customer', 'resolved', 'escalated', 'closed'].map(value => <option key={value} value={value}>{value.replace(/_/g, ' ')}</option>)}
+{statusOptions(ticket.status).map(value => <option key={value} value={value}>{value.replace(/_/g, ' ')}</option>)}
                           </select>
                           <button
                             onClick={async (event) => {
@@ -330,7 +351,7 @@ export function CasesPage() {
                       }}
                       className="flex-1 px-2 py-1.5 text-[11px] border border-surface-200 rounded-lg bg-white"
                     >
-                      {['open', 'in_progress', 'needs_information', 'pending_customer', 'resolved', 'escalated', 'closed'].map(value => <option key={value} value={value}>{value.replace(/_/g, ' ')}</option>)}
+                      {statusOptions(ticket.status).map(value => <option key={value} value={value}>{value.replace(/_/g, ' ')}</option>)}
                     </select>
                     <button
                       onClick={async () => {

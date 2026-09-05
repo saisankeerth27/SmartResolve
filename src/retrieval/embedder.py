@@ -8,10 +8,9 @@ import time
 from typing import Any
 
 from src.ai.gemini_client import embed_text, embed_texts, is_available
+from src.core.config import GEMINI_EMBEDDING_MODEL as EMBEDDING_MODEL
 
 logger = logging.getLogger(__name__)
-
-EMBEDDING_MODEL = "gemini-embedding-001"
 EMBEDDING_TASK_DOCUMENT = "RETRIEVAL_DOCUMENT"
 EMBEDDING_TASK_QUERY = "RETRIEVAL_QUERY"
 

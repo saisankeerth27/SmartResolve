@@ -404,7 +404,13 @@ def _build_mode_a_response(draft, classification) -> str:
         parts.append(draft.reasoning_summary)
 
     if hasattr(draft, 'citations') and draft.citations:
-        refs = ", ".join(draft.citations[:2]) if isinstance(draft.citations, list) else str(draft.citations)
+        def _fmt_citation(c):
+            if isinstance(c, str):
+                return c
+            if isinstance(c, dict):
+                return c.get("title") or c.get("document_id") or c.get("text") or str(c)
+            return str(c)
+        refs = ", ".join(_fmt_citation(c) for c in draft.citations[:2])
         parts.append(f"Reference: {refs}")
 
     if hasattr(draft, 'limitations') and draft.limitations:

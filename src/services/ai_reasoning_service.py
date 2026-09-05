@@ -129,7 +129,6 @@ def analyze_case(
         prompt=prompt,
         system_instruction=SYSTEM_INSTRUCTION,
         temperature=0.3,
-        max_output_tokens=4096,
     )
 
     if raw_response is None:
@@ -225,9 +224,25 @@ def _parse_reasoning_response(raw: str, chunks: list[dict]) -> dict[str, Any]:
                 })
         data["possible_causes"] = normalized_causes
 
-        # Normalize recommended_next_steps
-        if not isinstance(data.get("recommended_next_steps"), list):
-            data["recommended_next_steps"] = []
+        # Normalize recommended_next_steps: force plain strings
+        steps = data.get("recommended_next_steps", [])
+        if not isinstance(steps, list):
+            steps = []
+        normalized_steps = []
+        for step in steps:
+            if isinstance(step, str):
+                if step.strip():
+                    normalized_steps.append(step.strip())
+            elif isinstance(step, dict):
+                action = step.get("action")
+                if not isinstance(action, str):
+                    for k in ("step", "text", "description", "recommendation"):
+                        if isinstance(step.get(k), str) and step.get(k).strip():
+                            action = step.get(k)
+                            break
+                if isinstance(action, str) and action.strip():
+                    normalized_steps.append(action.strip())
+        data["recommended_next_steps"] = normalized_steps
 
         # Normalize limitations
         if not isinstance(data.get("limitations"), list):

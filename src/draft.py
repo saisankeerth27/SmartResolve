@@ -179,7 +179,6 @@ def generate_draft(
             prompt,
             system_instruction=system_instruction,
             temperature=0.2,
-            max_output_tokens=2048,
         )
 
         if not response:

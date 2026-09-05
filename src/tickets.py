@@ -21,6 +21,9 @@ VALID_STATES = (
 
 MANAGEMENT_STATES = ("in_progress", "pending_customer", "escalated", "closed")
 
+# Terminal states an agent may set directly from anywhere (management override).
+AGENT_OVERRIDE_TARGETS = ("in_progress", "pending_customer", "escalated", "closed", "resolved")
+
 # ── Valid transitions ─────────────────────────────────
 VALID_TRANSITIONS: dict[str, list[str]] = {
     "open": ["analyzing", "needs_information", "escalation_requested"],
@@ -36,13 +39,22 @@ VALID_TRANSITIONS: dict[str, list[str]] = {
 }
 
 MANAGEMENT_TRANSITIONS: dict[str, list[str]] = {
+    # Workflow states → agent overrides
     "open": ["analyzing", "in_progress", "needs_information", "pending_customer", "resolved", "escalated", "closed"],
     "new": ["analyzing", "in_progress", "needs_information", "pending_customer", "resolved", "escalated", "closed"],
+    "analyzing": ["needs_information", "pending_agent_approval", "escalation_requested", "in_progress", "pending_customer", "resolved", "escalated", "closed"],
+    "needs_information": ["analyzing", "escalation_requested", "dismissed", "open", "in_progress", "pending_customer", "resolved", "escalated", "closed"],
+    "pending_agent_approval": ["approved", "dismissed", "escalation_requested", "needs_information", "in_progress", "pending_customer", "resolved", "closed"],
+    "escalation_requested": ["human_review", "dismissed", "needs_information", "approved", "in_progress", "pending_customer", "resolved", "escalated", "closed"],
+    "human_review": ["approved", "dismissed", "needs_information", "in_progress", "pending_customer", "resolved", "closed"],
+    "approved": ["resolved", "needs_information", "in_progress", "pending_customer", "closed"],
+    "dismissed": ["open", "in_progress", "closed"],
+    "resolved": ["open", "in_progress", "closed"],
+    # Management states → management flows
     "in_progress": ["open", "needs_information", "pending_customer", "resolved", "escalated", "closed"],
     "pending_customer": ["open", "in_progress", "needs_information", "resolved", "closed"],
     "escalated": ["human_review", "open", "in_progress", "closed"],
-    "closed": ["open", "in_progress"],
-    "resolved": ["open", "in_progress", "closed"],
+    "closed": ["open", "in_progress", "resolved"],
 }
 
 
@@ -71,7 +83,7 @@ def validate_transition(from_state: str, to_state: str) -> bool:
         raise ValueError(f"Unknown state: '{from_state}'")
     if to_state not in VALID_STATES + MANAGEMENT_STATES:
         raise ValueError(f"Unknown state: '{to_state}'")
-    if from_state in MANAGEMENT_STATES or to_state in MANAGEMENT_STATES:
+    if from_state in MANAGEMENT_STATES or to_state in AGENT_OVERRIDE_TARGETS:
         allowed = MANAGEMENT_TRANSITIONS.get(from_state, VALID_TRANSITIONS.get(from_state, []))
     else:
         allowed = VALID_TRANSITIONS.get(from_state, [])

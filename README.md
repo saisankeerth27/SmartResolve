@@ -278,33 +278,120 @@ The system includes 5 pre-seeded demo cases:
 
 ## Architecture
 
+SmartResolve is a modular system with a clean separation between the FastAPI API layer, the analysis service layer, deterministic rules, retrieval (RAG), and AI. Data flows from a React SPA → FastAPI → orchestration services → deterministic rule engine (with optional RAG retrieval and Gemini grounding).
+
+### High-Level Flow
+
 ```
-Customer Message
-       |
-       v
-Account + Operational Context
-       |
-       v
-Deterministic Rules (classify.py)
-       |
-       +------------------+------------------+
-       |                  |                  |
-       v                  v                  v
-   MODE A             MODE B             MODE C
-   Routine            Missing Info        Escalation
-       |                  |                  |
-       v                  v                  v
-  Gemini Draft      One Question        Handover
-       |                  |                  |
-       v                  v                  v
-  Citations         Continue Case       Human Queue
-       |
-       v
-  Pending Approval
-       |
-       v
-  Human Decision
+Customer Message (Chat)  or  Agent Action (Console)
+                 |
+                 v
+  FastAPI Router (src/api/routes.py)  ── Pydantic validation (src/api/schemas.py)
+                 |
+                 v
+  Analysis Orchestrator (src/services/analysis_service.py)
+                 |
+      +----------+----------+----------+
+      |          |          |          |
+      v          v          v          v
+Context   Retrieval   Deterministic   State
+Builder    (RAG)      Rules         Machine
+                 |          |
+                 v          v
+        Gemini Grounding   Mode A / B / C routing
+                 |
+                 v
+    Draft / Clarification / Escalation Handover
+                 |
+                 v
+  SQLite (tickets, audit, review_states, escalation_records,
+         case_analysis_results, conversations, ...)
+                 |
+                 v
+  React SPA (Agent Console, Case Detail, Chat, Dashboard)
 ```
+
+### Backend Modules
+
+| Module | Responsibility |
+|--------|----------------|
+| `src/api/routes.py` | All REST endpoints (cases, tickets, chat, knowledge, dashboard, queue). Serves the prebuilt React build from `frontend/dist`. |
+| `src/api/schemas.py` | Pydantic request/response models and validation. |
+| `src/services/analysis_service.py` | Central orchestrator — builds context, runs retrieval, classifies, routes to Mode A/B/C, records audit events, persists results. |
+| `src/services/ai_reasoning_service.py` | Grounded AI reasoning (Gemini + RAG) with a structured response parser. |
+| `src/services/resolution_service.py` | Resolution decision engine combining deterministic rules, RAG evidence, and AI assessment into a recommendation. |
+| `src/services/case_investigation_service.py` | Assembles investigation context (customer, subscription, network, incidents, tickets) for a case. |
+| `src/services/dashboard_service.py` | Aggregates dashboard overview/KPI metrics. |
+| `src/services/knowledge_service.py` | Knowledge document metadata, categories, and chunk listing. |
+
+### Core PII & Classification
+
+| Module | Responsibility |
+|--------|----------------|
+| `src/classify.py` | Deterministic classification engine (Mode A/B/C) — pure Python, no Gemini for mode selection. |
+| `src/category_detector.py` | Maps free-text customer messages to service categories. |
+| `src/draft.py` | Mode A grounded resolution-draft generation (grounding context + Gemini). |
+| `src/clarify.py` | Mode B targeted clarification question generation with turn tracking. |
+| `src/escalate.py` | Mode C complete escalation handover package builder + persistence. |
+| `src/tickets.py` | Case state machine, transition validation, agent override targets. |
+| `src/audit.py` | Full audit trail recording for every case action. |
+| `src/chat.py` | Customer conversation handling — routes messages through the Mode A/B/C pipeline. |
+| `src/config.py` | Configurable thresholds and category→knowledge maps. |
+
+### Rules Engine
+
+| Module | Responsibility |
+|--------|----------------|
+| `src/rules/escalation.py` | Evaluates the escalation matrix (severity → queue). |
+| `src/rules/conflict.py` | Detects conflicting evidence across data sources (blocks auto-drafting). |
+| `src/rules/resolution_rules.py` | Deterministic resolution recommendation rules (incident matching, plan checks, etc.). |
+
+### Retrieval (RAG)
+
+| Module | Responsibility |
+|--------|----------------|
+| `src/retrieval/knowledge_loader.py` | Loads markdown knowledge documents. |
+| `src/retrieval/chunker.py` | Deterministic document chunking. |
+| `src/retrieval/embedder.py` | Embeds documents/queries via Gemini Embedding 001. |
+| `src/retrieval/vector_store.py` | FAISS index load/save (195 vectors, dim 3072). |
+| `src/retrieval/retriever.py` | Retrieves top-k relevant chunks with scores. |
+| `src/retrieval/context_builder.py` | Builds the retrieval query from case context. |
+
+### AI Layer
+
+| Module | Responsibility |
+|--------|----------------|
+| `src/ai/gemini_client.py` | Single gateway to Gemini — key loading, throttling, cache, fail-fast behavior. Model pinned to `gemini-3.5-flash` (text) and `gemini-embedding-001` (embeddings). |
+| `src/ai/prompts.py` | Prompt templates for reasoning/draft/clarification. |
+| `src/ai/models.py` | Typed AI result dataclasses. |
+
+### Database Layer
+
+| Module | Responsibility |
+|--------|----------------|
+| `src/database/db.py` | SQLite connection + init hook. |
+| `src/database/init_db.py` | Schema creation (18 tables). |
+| `src/database/seed.py` | India-focused synthetic dataset seeding. |
+| `src/database/repositories/*` | Per-entity repositories (customer, ticket, network, incident, plan). |
+
+### Frontend Modules (`frontend/src`)
+
+| Area | Files |
+|------|-------|
+| Pages | `Overview`, `Cases`, `CaseDetail`, `AgentConsole`, `CustomerChat`, `Knowledge`, `KnowledgeDetail` |
+| Dashboard widgets | `KpiCards`, `ActiveIncidents`, `NetworkHealth`, `PriorityCases`, `RecentActivity`, `RegionalImpact`, `TicketWorkload` |
+| Common components | `Badges`, `States` |
+| Services/Types | `services/api.ts`, `types/*` |
+
+### Key Design Properties
+
+- **API layer is thin** — routes validate with Pydantic and delegate to services.
+- **Analysis is orchestrated, not scattered** — `analysis_service.analyze_ticket` is the single entry point for any case.
+- **Rules are deterministic** — classification, escalation, and conflict detection never depend on Gemini.
+- **AI is grounded** — Gemini only sees customer/operational facts plus retrieved knowledge, and its output is parsed/validated before it can reach the UI.
+- **Database is the source of truth** — every mutation persists to SQLite with history and audit.
+- **Graceful degradation** — if Gemini or FAISS is unavailable, the system serves deterministic fallbacks or escalates instead of failing.
+
 
 ## India-Focused Synthetic Dataset
 
@@ -342,17 +429,20 @@ The database is automatically initialized and seeded with India-focused syntheti
 python -m pytest tests/ -v
 ```
 
-- **33 unit tests:** Classification engine, escalation matrix, conflict detection, state machine, clarification, missing info
-- **7 E2E workflow tests:** Mode A/B/C lifecycle, reopen, invalid transitions, audit trail, classification modes
+- **43 pytest tests:** Classification engine, escalation matrix, conflict detection, state machine, clarification, missing info, agent resolve/close overrides + E2E workflows
 - Classification tests do NOT depend on Gemini
 
 ## Environment Variables
+
+Environment variables are read via `python-dotenv` from a local `.env` file (which is **gitignored — never committed**). You can also set them in your shell.
 
 | Variable | Description | Required |
 |----------|-------------|----------|
 | `PORT` | Server port (default: 8000) | No |
 | `HOST` | Server host (default: 0.0.0.0) | No |
 | `GEMINI_API_KEY` | Google Gemini API key | No (required for AI features) |
+| `GEMINI_MODEL` | Gemini text model (default: `gemini-3.5-flash`) | No |
+| `GEMINI_EMBEDDING_MODEL` | Gemini embedding model (default: `gemini-embedding-001`) | No |
 | `SAFE_RETRIEVAL_THRESHOLD` | Minimum retrieval score (default: 0.35) | No |
 | `REPEAT_COMPLAINT_THRESHOLD` | Tickets before escalation (default: 2) | No |
 | `CLARIFICATION_MAX_TURNS` | Max clarification rounds (default: 3) | No |
