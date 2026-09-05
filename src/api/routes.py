@@ -811,7 +811,7 @@ async def submit_clarification_answer(ticket_id: int, body: dict):
 
 @router.post("/cases/{ticket_id}/approve")
 async def approve_recommendation(ticket_id: int, body: dict | None = None):
-    """Agent approves the resolution recommendation."""
+    """Agent approves the resolution recommendation. Requires case to be in pending_agent_approval state."""
     conn = get_connection()
     try:
         repo = TicketRepository(conn)
@@ -822,13 +822,25 @@ async def approve_recommendation(ticket_id: int, body: dict | None = None):
         current = get_current_state(conn, ticket_id)
         notes = (body or {}).get("notes", "")
 
-        transition = transition_case(conn, ticket_id, current, "approved", "agent", notes)
+        if current not in ("pending_agent_approval", "human_review"):
+            raise HTTPException(status_code=400, detail=f"Cannot approve: case is in '{current}' state. Expected 'pending_agent_approval' or 'human_review'.")
 
-        # Record audit event
+        transition = transition_case(conn, ticket_id, current, "approved", "agent", notes or "Recommendation approved by agent")
+
         from src.audit import record_recommendation_approved
         record_recommendation_approved(conn, ticket_id, "agent", notes)
 
-        return {"status": "ok", "transition": transition}
+        new_state = get_current_state(conn, ticket_id)
+        history = get_state_history(conn, ticket_id)
+
+        return {
+            "success": True,
+            "case_id": ticket_id,
+            "new_status": new_state,
+            "transition": transition,
+            "message": "Recommendation approved. Case is now approved and ready to be resolved.",
+            "state_history": history,
+        }
     except InvalidTransitionError as e:
         raise HTTPException(status_code=400, detail=str(e))
     finally:
@@ -837,7 +849,7 @@ async def approve_recommendation(ticket_id: int, body: dict | None = None):
 
 @router.post("/cases/{ticket_id}/dismiss")
 async def dismiss_recommendation(ticket_id: int, body: dict | None = None):
-    """Agent dismisses the resolution recommendation."""
+    """Agent dismisses the resolution recommendation. Requires a reason."""
     conn = get_connection()
     try:
         repo = TicketRepository(conn)
@@ -848,12 +860,25 @@ async def dismiss_recommendation(ticket_id: int, body: dict | None = None):
         current = get_current_state(conn, ticket_id)
         reason = (body or {}).get("reason", "")
 
-        transition = transition_case(conn, ticket_id, current, "dismissed", "agent", reason)
+        if current not in ("pending_agent_approval", "human_review", "needs_information", "escalation_requested"):
+            raise HTTPException(status_code=400, detail=f"Cannot dismiss: case is in '{current}' state.")
+
+        transition = transition_case(conn, ticket_id, current, "dismissed", "agent", reason or "Recommendation dismissed")
 
         from src.audit import record_recommendation_dismissed
         record_recommendation_dismissed(conn, ticket_id, "agent", reason)
 
-        return {"status": "ok", "transition": transition}
+        new_state = get_current_state(conn, ticket_id)
+        history = get_state_history(conn, ticket_id)
+
+        return {
+            "success": True,
+            "case_id": ticket_id,
+            "new_status": new_state,
+            "transition": transition,
+            "message": "Recommendation dismissed.",
+            "state_history": history,
+        }
     except InvalidTransitionError as e:
         raise HTTPException(status_code=400, detail=str(e))
     finally:
@@ -862,7 +887,7 @@ async def dismiss_recommendation(ticket_id: int, body: dict | None = None):
 
 @router.post("/cases/{ticket_id}/escalate")
 async def escalate_case(ticket_id: int, body: dict | None = None):
-    """Agent manually escalates a case."""
+    """Agent escalates a case to human review. Transitions through escalation_requested → human_review."""
     conn = get_connection()
     try:
         repo = TicketRepository(conn)
@@ -874,12 +899,44 @@ async def escalate_case(ticket_id: int, body: dict | None = None):
         reason = (body or {}).get("reason", "Manual escalation by agent")
         queue = (body or {}).get("queue", "Technical Support - L1")
 
-        transition = transition_case(conn, ticket_id, current, "escalation_requested", "agent", reason)
+        if current not in ("pending_agent_approval", "analyzing", "needs_information", "human_review", "escalation_requested"):
+            raise HTTPException(status_code=400, detail=f"Cannot escalate: case is in '{current}' state.")
+
+        # Transition to escalation_requested first (skip if already there)
+        transition = None
+        if current != "escalation_requested":
+            transition = transition_case(conn, ticket_id, current, "escalation_requested", "agent", reason)
+
+        # Then immediately to human_review
+        try:
+            transition = transition_case(conn, ticket_id, "escalation_requested", "human_review", "agent", f"Escalated to {queue}: {reason}")
+        except (InvalidTransitionError, ValueError):
+            pass  # Already at human_review is fine
 
         from src.audit import record_escalation
         record_escalation(conn, ticket_id, queue, [reason])
 
-        return {"status": "ok", "transition": transition}
+        # Store escalation record
+        from src.escalate import build_handover
+        investigation = get_case_investigation(conn, ticket_id)
+        if investigation:
+            from src.classify import ClassificationResult
+            temp_class = ClassificationResult(mode="C", reason_codes=[reason], escalation_queue=queue)
+            handover = build_handover(investigation, temp_class, {"total": 0, "average_score": 0.0, "chunks": []})
+            from src.escalate import store_escalation
+            store_escalation(conn, ticket_id, handover)
+
+        new_state = get_current_state(conn, ticket_id)
+        history = get_state_history(conn, ticket_id)
+
+        return {
+            "success": True,
+            "case_id": ticket_id,
+            "new_status": new_state,
+            "transition": transition,
+            "message": f"Case escalated to {queue}.",
+            "state_history": history,
+        }
     except InvalidTransitionError as e:
         raise HTTPException(status_code=400, detail=str(e))
     finally:
@@ -888,7 +945,7 @@ async def escalate_case(ticket_id: int, body: dict | None = None):
 
 @router.post("/cases/{ticket_id}/resolve-final")
 async def resolve_case_final(ticket_id: int, body: dict | None = None):
-    """Agent marks case as resolved."""
+    """Agent marks case as resolved. Requires case to be in approved state."""
     conn = get_connection()
     try:
         repo = TicketRepository(conn)
@@ -897,14 +954,65 @@ async def resolve_case_final(ticket_id: int, body: dict | None = None):
             raise HTTPException(status_code=404, detail="Ticket not found")
 
         current = get_current_state(conn, ticket_id)
-        resolution = (body or {}).get("resolution", "")
+        resolution = (body or {}).get("resolution", "Case resolved by agent")
+
+        if current not in ("approved", "human_review"):
+            raise HTTPException(status_code=400, detail=f"Cannot resolve: case is in '{current}' state. Approve the recommendation first.")
 
         transition = transition_case(conn, ticket_id, current, "resolved", "agent", resolution)
 
         from src.audit import record_case_resolved
         record_case_resolved(conn, ticket_id, resolution)
 
-        return {"status": "ok", "transition": transition}
+        new_state = get_current_state(conn, ticket_id)
+        history = get_state_history(conn, ticket_id)
+
+        return {
+            "success": True,
+            "case_id": ticket_id,
+            "new_status": new_state,
+            "transition": transition,
+            "message": "Case resolved successfully.",
+            "state_history": history,
+        }
+    except InvalidTransitionError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    finally:
+        conn.close()
+
+
+@router.post("/cases/{ticket_id}/reopen")
+async def reopen_case(ticket_id: int, body: dict | None = None):
+    """Reopen a dismissed or resolved case back to analyzing."""
+    conn = get_connection()
+    try:
+        repo = TicketRepository(conn)
+        ticket = repo.get_by_id(ticket_id)
+        if not ticket:
+            raise HTTPException(status_code=404, detail="Ticket not found")
+
+        current = get_current_state(conn, ticket_id)
+        reason = (body or {}).get("reason", "Case reopened for further investigation")
+
+        if current not in ("dismissed", "resolved"):
+            raise HTTPException(status_code=400, detail=f"Cannot reopen: case is in '{current}' state.")
+
+        transition = transition_case(conn, ticket_id, current, "open", "agent", reason)
+
+        from src.audit import record_event
+        record_event(conn, ticket_id, "case_reopened", {"reason": reason, "previous_state": current}, "agent")
+
+        new_state = get_current_state(conn, ticket_id)
+        history = get_state_history(conn, ticket_id)
+
+        return {
+            "success": True,
+            "case_id": ticket_id,
+            "new_status": new_state,
+            "transition": transition,
+            "message": "Case reopened for investigation.",
+            "state_history": history,
+        }
     except InvalidTransitionError as e:
         raise HTTPException(status_code=400, detail=str(e))
     finally:
@@ -975,14 +1083,23 @@ async def get_support_queue(
                 "all": None,
                 "routine": "pending_agent_approval",
                 "needs_information": "needs_information",
-                "human_review": "escalation_requested",
+                "human_review": "human_review",
                 "pending_approval": "pending_agent_approval",
                 "resolved": "resolved",
                 "analyzing": "analyzing",
+                "escalation_requested": "escalation_requested",
+                "approved": "approved",
+                "dismissed": "dismissed",
             }
             status_filter = status_map.get(status)
 
         data, total = repo.list_tickets(status=status_filter, page=page, page_size=page_size)
+
+        # Get counts by status for the filter badges
+        status_counts = {}
+        for s_name, s_val in [("all", None), ("routine", "pending_agent_approval"), ("needs_information", "needs_information"), ("human_review", "human_review"), ("pending_approval", "pending_agent_approval"), ("resolved", "resolved")]:
+            _, count = repo.list_tickets(status=s_val, page=1, page_size=1)
+            status_counts[s_name] = count
 
         # Enrich with customer name and operator
         enriched = []
@@ -1023,6 +1140,7 @@ async def get_support_queue(
         return {
             "data": enriched,
             "pagination": _paginate(total, page, page_size),
+            "status_counts": status_counts,
         }
     finally:
         conn.close()

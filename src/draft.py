@@ -174,7 +174,8 @@ def generate_draft(
     )
 
     try:
-        response = gemini_client.generate_text(
+        from src.ai.gemini_client import generate_text as gemini_generate
+        response = gemini_generate(
             prompt,
             system_instruction=system_instruction,
             temperature=0.2,

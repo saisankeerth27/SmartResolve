@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { OverviewPage } from './pages/Overview'
 import { CasesPage } from './pages/Cases'
@@ -148,20 +148,27 @@ function CustomersPage() {
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
   const [segment, setSegment] = useState('')
-  const [data, setData] = useState<{ data: { id: number; customer_number: string; name: string; email: string; segment: string; status: string }[]; pagination: { total: number; page: number; total_pages: number } } | null>(null)
+  const [data, setData] = useState<{ data: { id: number; customer_number: string; name: string; email: string; phone: string; segment: string; status: string }[]; pagination: { total: number; page: number; total_pages: number } } | null>(null)
   const [loading, setLoading] = useState(true)
 
-  useState(() => {
-    const params = new URLSearchParams()
-    params.set('page', String(page))
-    params.set('page_size', '15')
-    if (search) params.set('search', search)
-    if (segment) params.set('segment', segment)
-    fetch(`/api/customers?${params.toString()}`)
-      .then(r => r.json())
-      .then(d => { setData(d); setLoading(false) })
-      .catch(() => setLoading(false))
-  })
+  const fetchData = useCallback(async () => {
+    setLoading(true)
+    try {
+      const params = new URLSearchParams()
+      params.set('page', String(page))
+      params.set('page_size', '15')
+      if (search) params.set('search', search)
+      if (segment) params.set('segment', segment)
+      const res = await fetch(`/api/customers?${params.toString()}`)
+      const d = await res.json()
+      setData(d)
+    } catch {
+      // failed
+    }
+    setLoading(false)
+  }, [page, search, segment])
+
+  useEffect(() => { fetchData() }, [fetchData])
 
   return (
     <div className="space-y-4">
@@ -236,37 +243,348 @@ function CustomersPage() {
 }
 
 function OperationsPage() {
+  const navigate = useNavigate()
+  const [networkData, setNetworkData] = useState<{ data: { id: number; site_code: string; site_name: string; technology: string; region: string; city: string; state: string; status: string; capacity_percent: number }[]; pagination: { total: number } } | null>(null)
+  const [incidents, setIncidents] = useState<{ data: { id: number; incident_number: string; title: string; severity: string; region: string; status: string; affected_service: string; started_at: string; affected_customers_estimate: number }[]; pagination: { total: number } } | null>(null)
+  const [tickets, setTickets] = useState<{ data: { id: number; ticket_number: string; status: string; priority: string; category: string }[]; pagination: { total: number } } | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchAll = async () => {
+      setLoading(true)
+      try {
+        const [sitesRes, incRes, tkRes] = await Promise.all([
+          fetch('/api/network/sites?page_size=100'),
+          fetch('/api/incidents?page_size=50'),
+          fetch('/api/tickets?page_size=100'),
+        ])
+        setNetworkData(await sitesRes.json())
+        setIncidents(await incRes.json())
+        setTickets(await tkRes.json())
+      } catch { /* ignore */ }
+      setLoading(false)
+    }
+    fetchAll()
+  }, [])
+
+  const siteStatusCounts = { operational: 0, degraded: 0, offline: 0, maintenance: 0 }
+  const ticketStatusCounts: Record<string, number> = {}
+  const ticketPriorityCounts: Record<string, number> = {}
+  const ticketCategoryCounts: Record<string, number> = {}
+  const activeIncidents = incidents?.data.filter(i => i.status !== 'resolved') || []
+
+  networkData?.data.forEach(s => { siteStatusCounts[s.status as keyof typeof siteStatusCounts] = (siteStatusCounts[s.status as keyof typeof siteStatusCounts] || 0) + 1 })
+  tickets?.data.forEach(t => {
+    ticketStatusCounts[t.status] = (ticketStatusCounts[t.status] || 0) + 1
+    ticketPriorityCounts[t.priority] = (ticketPriorityCounts[t.priority] || 0) + 1
+    ticketCategoryCounts[t.category] = (ticketCategoryCounts[t.category] || 0) + 1
+  })
+
+  if (loading) return <div className="p-8 text-center text-sm text-surface-400">Loading operations data...</div>
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div>
         <h2 className="text-lg font-semibold text-surface-900">Network Operations</h2>
-        <p className="text-sm text-surface-500 mt-0.5">Monitor network operational records.</p>
+        <p className="text-sm text-surface-500 mt-0.5">Real-time network health, incidents, and support operations.</p>
       </div>
-      <div className="bg-white rounded-xl border border-surface-200 p-8 text-center">
-        <p className="text-sm text-surface-500">Use the Overview dashboard for network operations monitoring.</p>
+
+      {/* Network Health */}
+      <div className="bg-white rounded-xl border border-surface-200 p-4">
+        <h3 className="text-sm font-semibold text-surface-900 mb-3">Network Health ({networkData?.pagination.total || 0} Sites)</h3>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {Object.entries(siteStatusCounts).map(([status, count]) => (
+            <button key={status} onClick={() => navigate(`/cases`)} className={`p-3 rounded-lg border text-center transition-colors hover:shadow-sm ${
+              status === 'operational' ? 'bg-emerald-50 border-emerald-200 hover:bg-emerald-100' :
+              status === 'degraded' ? 'bg-amber-50 border-amber-200 hover:bg-amber-100' :
+              status === 'offline' ? 'bg-red-50 border-red-200 hover:bg-red-100' :
+              'bg-surface-50 border-surface-200 hover:bg-surface-100'
+            }`}>
+              <div className={`text-2xl font-bold ${
+                status === 'operational' ? 'text-emerald-600' :
+                status === 'degraded' ? 'text-amber-600' :
+                status === 'offline' ? 'text-red-600' : 'text-surface-600'
+              }`}>{count}</div>
+              <div className="text-[10px] font-medium uppercase tracking-wider mt-1 capitalize">{status}</div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Active Incidents */}
+      <div className="bg-white rounded-xl border border-surface-200 p-4">
+        <h3 className="text-sm font-semibold text-surface-900 mb-3">Active Incidents ({activeIncidents.length})</h3>
+        {activeIncidents.length === 0 ? (
+          <p className="text-xs text-surface-400">No active incidents.</p>
+        ) : (
+          <div className="space-y-2">
+            {activeIncidents.map(inc => (
+              <button key={inc.id} onClick={() => navigate(`/cases`)} className="w-full text-left p-3 rounded-lg border border-surface-100 hover:bg-surface-50 transition-colors">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-mono text-surface-400">{inc.incident_number}</span>
+                  <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded ${
+                    inc.severity === 'critical' ? 'bg-red-100 text-red-700' :
+                    inc.severity === 'high' ? 'bg-amber-100 text-amber-700' :
+                    'bg-surface-100 text-surface-600'
+                  }`}>{inc.severity.toUpperCase()}</span>
+                  <span className="text-[9px] text-surface-400">{inc.region}</span>
+                  <span className="text-[9px] text-surface-400 ml-auto">{inc.affected_service}</span>
+                </div>
+                <p className="text-xs font-medium text-surface-800 mt-1">{inc.title}</p>
+                <div className="flex items-center gap-3 mt-1 text-[10px] text-surface-400">
+                  <span>{inc.affected_customers_estimate.toLocaleString()} affected</span>
+                  <span>{inc.status}</span>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Ticket Operations */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="bg-white rounded-xl border border-surface-200 p-4">
+          <h3 className="text-sm font-semibold text-surface-900 mb-3">By Status</h3>
+          <div className="space-y-1.5">
+            {Object.entries(ticketStatusCounts).sort((a, b) => b[1] - a[1]).map(([status, count]) => (
+              <button key={status} onClick={() => navigate('/cases')} className="w-full flex items-center justify-between text-xs px-2 py-1.5 rounded hover:bg-surface-50">
+                <span className="capitalize text-surface-700">{status.replace(/_/g, ' ')}</span>
+                <span className="font-medium text-surface-900">{count}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="bg-white rounded-xl border border-surface-200 p-4">
+          <h3 className="text-sm font-semibold text-surface-900 mb-3">By Priority</h3>
+          <div className="space-y-1.5">
+            {Object.entries(ticketPriorityCounts).sort((a, b) => b[1] - a[1]).map(([priority, count]) => (
+              <button key={priority} onClick={() => navigate('/cases')} className="w-full flex items-center justify-between text-xs px-2 py-1.5 rounded hover:bg-surface-50">
+                <span className={`capitalize font-medium ${
+                  priority === 'critical' ? 'text-red-600' :
+                  priority === 'high' ? 'text-amber-600' : 'text-surface-700'
+                }`}>{priority}</span>
+                <span className="font-medium text-surface-900">{count}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="bg-white rounded-xl border border-surface-200 p-4">
+          <h3 className="text-sm font-semibold text-surface-900 mb-3">By Category</h3>
+          <div className="space-y-1.5">
+            {Object.entries(ticketCategoryCounts).sort((a, b) => b[1] - a[1]).map(([category, count]) => (
+              <button key={category} onClick={() => navigate('/cases')} className="w-full flex items-center justify-between text-xs px-2 py-1.5 rounded hover:bg-surface-50">
+                <span className="capitalize text-surface-700">{category.replace(/_/g, ' ')}</span>
+                <span className="font-medium text-surface-900">{count}</span>
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   )
 }
 
 function EvidencePage() {
+  const navigate = useNavigate()
+  const [caseId, setCaseId] = useState('')
+  const [investigation, setInvestigation] = useState<Record<string, unknown> | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [searchParams] = useState(() => new URLSearchParams(window.location.search))
+  const initialCaseId = searchParams.get('case_id') || ''
+
+  useEffect(() => {
+    if (initialCaseId && !caseId) {
+      setCaseId(initialCaseId)
+    }
+  }, [initialCaseId])
+
+  useEffect(() => {
+    if (!caseId) { setInvestigation(null); return }
+    setLoading(true)
+    fetch(`/api/cases/${caseId}/investigation`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { setInvestigation(d); setLoading(false) })
+      .catch(() => { setInvestigation(null); setLoading(false) })
+  }, [caseId])
+
+  const inv = investigation as Record<string, unknown> | null
+  const ticket = inv?.ticket as Record<string, unknown> | undefined
+  const customer = inv?.customer as Record<string, unknown> | undefined
+  const subscription = inv?.subscription as Record<string, unknown> | undefined
+  const network = inv?.network as Record<string, unknown> | undefined
+  const networkSite = network?.site as Record<string, unknown> | undefined
+  const networkEvents = (network?.events || []) as Record<string, unknown>[]
+  const incidents = (inv?.incidents || []) as Record<string, unknown>[]
+  const investigationData = inv?.investigation as Record<string, unknown> | undefined
+  const knownFacts = (investigationData?.known_facts || []) as string[]
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div>
         <h2 className="text-lg font-semibold text-surface-900">Evidence & Citations</h2>
-        <p className="text-sm text-surface-500 mt-0.5">AI-generated evidence, citations, and resolution recommendations.</p>
+        <p className="text-sm text-surface-500 mt-0.5">View evidence traceability for any case. Every recommendation links back to account, operational, and knowledge evidence.</p>
       </div>
-      <div className="bg-white rounded-xl border border-surface-200 p-8 text-center">
-        <div className="w-16 h-16 rounded-full bg-surface-100 flex items-center justify-center mx-auto mb-4">
-          <svg className="w-8 h-8 text-surface-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-          </svg>
+
+      <div className="flex gap-3">
+        <input
+          type="text"
+          placeholder="Enter case ID (e.g. 60)..."
+          value={caseId}
+          onChange={(e) => setCaseId(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && caseId && navigate(`/evidence?case_id=${caseId}`)}
+          className="flex-1 px-3 py-2 text-sm border border-surface-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-brand-500"
+        />
+        <button
+          onClick={() => caseId && navigate(`/evidence?case_id=${caseId}`)}
+          className="px-4 py-2 text-sm font-medium text-white bg-brand-600 rounded-lg hover:bg-brand-700 transition-colors"
+        >
+          Load Evidence
+        </button>
+      </div>
+
+      {loading && <div className="p-8 text-center text-sm text-surface-400">Loading evidence...</div>}
+
+      {!loading && !investigation && caseId && (
+        <div className="bg-white rounded-xl border border-surface-200 p-8 text-center">
+          <p className="text-sm text-surface-500">No case found with ID {caseId}.</p>
         </div>
-        <h4 className="text-sm font-medium text-surface-700 mb-1">Evidence & Citations</h4>
-        <p className="text-xs text-surface-500 max-w-sm mx-auto">
-          AI-generated evidence, citations, and resolution recommendations will appear here after the Gemini reasoning engine is implemented.
-        </p>
-      </div>
+      )}
+
+      {!loading && !caseId && (
+        <div className="bg-white rounded-xl border border-surface-200 p-8 text-center">
+          <div className="w-16 h-16 rounded-full bg-surface-100 flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-surface-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+          </div>
+          <h4 className="text-sm font-medium text-surface-700 mb-1">Select a Case</h4>
+          <p className="text-xs text-surface-500 max-w-sm mx-auto">Enter a case ID above to view the complete evidence chain: account data, operational context, network status, and knowledge citations.</p>
+        </div>
+      )}
+
+      {investigation && (
+        <div className="space-y-4">
+          {/* Case Header */}
+          {ticket && (
+            <div className="bg-white rounded-xl border border-surface-200 p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xs font-mono text-surface-400">{ticket.ticket_number as string}</span>
+                <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded ${
+                  ticket.priority === 'critical' ? 'bg-red-100 text-red-700' :
+                  ticket.priority === 'high' ? 'bg-amber-100 text-amber-700' :
+                  'bg-surface-100 text-surface-600'
+                }`}>{(ticket.priority as string)?.toUpperCase()}</span>
+                <span className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-surface-100 text-surface-600">{ticket.status as string}</span>
+              </div>
+              <h3 className="text-sm font-semibold text-surface-900">{ticket.subject as string}</h3>
+              <p className="text-xs text-surface-500 mt-1">{ticket.description as string}</p>
+              <button onClick={() => navigate(`/cases/${ticket.id}`)} className="text-xs text-brand-600 hover:text-brand-700 font-medium mt-2">Open Case →</button>
+            </div>
+          )}
+
+          {/* Account Evidence */}
+          {customer && (
+            <div className="bg-white rounded-xl border border-surface-200 p-4">
+              <h3 className="text-xs font-semibold text-surface-500 uppercase tracking-wider mb-3">Account Evidence</h3>
+              <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-xs">
+                <div className="text-surface-500">Customer</div><div className="font-medium text-surface-800">{customer.name as string}</div>
+                <div className="text-surface-500">Customer #</div><div className="font-mono text-surface-600">{customer.customer_number as string}</div>
+                <div className="text-surface-500">Phone</div><div className="text-surface-700">{customer.phone as string}</div>
+                <div className="text-surface-500">Segment</div><div className="text-surface-700 capitalize">{customer.segment as string}</div>
+                <div className="text-surface-500">Status</div><div className={`font-medium ${customer.status === 'active' ? 'text-emerald-600' : 'text-amber-600'}`}>{customer.status as string}</div>
+              </div>
+            </div>
+          )}
+
+          {/* Subscription Evidence */}
+          {subscription && (
+            <div className="bg-white rounded-xl border border-surface-200 p-4">
+              <h3 className="text-xs font-semibold text-surface-500 uppercase tracking-wider mb-3">Subscription Evidence</h3>
+              <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-xs">
+                <div className="text-surface-500">Plan</div><div className="font-medium text-surface-800">{subscription.plan_name as string}</div>
+                <div className="text-surface-500">Service</div><div className="text-surface-700">{subscription.service_type as string}</div>
+                <div className="text-surface-500">Price</div><div className="text-surface-700">₹{subscription.monthly_price as number}/mo</div>
+                <div className="text-surface-500">Data Limit</div><div className="text-surface-700">{subscription.data_limit_gb as number}GB</div>
+                <div className="text-surface-500">Status</div><div className={`font-medium ${(subscription.status as string) === 'active' ? 'text-emerald-600' : 'text-amber-600'}`}>{subscription.status as string}</div>
+              </div>
+            </div>
+          )}
+
+          {/* Network Evidence */}
+          <div className="bg-white rounded-xl border border-surface-200 p-4">
+            <h3 className="text-xs font-semibold text-surface-500 uppercase tracking-wider mb-3">Network Evidence</h3>
+            {networkSite ? (
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-xs">
+                  <div className="text-surface-500">Site</div><div className="font-medium text-surface-800">{networkSite.site_code as string}</div>
+                  <div className="text-surface-500">Technology</div><div className="text-surface-700">{networkSite.technology as string}</div>
+                  <div className="text-surface-500">Region</div><div className="text-surface-700">{networkSite.region as string}</div>
+                  <div className="text-surface-500">City</div><div className="text-surface-700">{networkSite.city as string}</div>
+                  <div className="text-surface-500">Status</div><div className={`font-medium ${(networkSite.status as string) === 'operational' ? 'text-emerald-600' : (networkSite.status as string) === 'degraded' ? 'text-amber-600' : 'text-red-600'}`}>{networkSite.status as string}</div>
+                  <div className="text-surface-500">Capacity</div><div className="text-surface-700">{networkSite.capacity_percent as number}%</div>
+                </div>
+                {networkEvents.length > 0 && (
+                  <div className="pt-2 border-t border-surface-100">
+                    <p className="text-[10px] font-medium text-surface-500 uppercase mb-1">Recent Events</p>
+                    {networkEvents.slice(0, 5).map((ev, i) => (
+                      <div key={i} className="text-[10px] py-1">
+                        <span className={`font-medium ${(ev.severity as string) === 'critical' ? 'text-red-600' : (ev.severity as string) === 'high' ? 'text-amber-600' : 'text-surface-500'}`}>{(ev.severity as string)?.toUpperCase()}</span>
+                        <span className="text-surface-700 ml-1">{ev.title as string}</span>
+                        <span className="text-surface-400 ml-1">({ev.status as string})</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className="text-xs text-surface-400">No network site data available.</p>
+            )}
+          </div>
+
+          {/* Incident Evidence */}
+          {incidents.length > 0 && (
+            <div className="bg-white rounded-xl border border-surface-200 p-4">
+              <h3 className="text-xs font-semibold text-surface-500 uppercase tracking-wider mb-3">Incident Evidence</h3>
+              <div className="space-y-2">
+                {incidents.map((inc, i) => (
+                  <div key={i} className="p-2 rounded-lg bg-surface-50 border border-surface-100">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-mono text-surface-400">{inc.incident_number as string}</span>
+                      <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded ${
+                        inc.severity === 'critical' ? 'bg-red-100 text-red-700' : inc.severity === 'high' ? 'bg-amber-100 text-amber-700' : 'bg-surface-100 text-surface-600'
+                      }`}>{(inc.severity as string)?.toUpperCase()}</span>
+                    </div>
+                    <p className="text-xs text-surface-700 mt-0.5">{inc.title as string}</p>
+                    <p className="text-[10px] text-surface-400">{inc.region as string} · {inc.affected_service as string} · {inc.status as string}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Known Facts */}
+          {knownFacts.length > 0 && (
+            <div className="bg-white rounded-xl border border-surface-200 p-4">
+              <h3 className="text-xs font-semibold text-surface-500 uppercase tracking-wider mb-3">Confirmed Facts</h3>
+              <ul className="space-y-1">
+                {knownFacts.map((fact, i) => (
+                  <li key={i} className="text-xs text-surface-700 flex items-start gap-2">
+                    <span className="text-emerald-500 mt-0.5">✓</span> {fact}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Traceability */}
+          <div className="bg-surface-50 rounded-xl border border-surface-200 p-4">
+            <h3 className="text-xs font-semibold text-surface-500 uppercase tracking-wider mb-2">Evidence Traceability</h3>
+            <p className="text-xs text-surface-600">
+              Every AI recommendation traces back to: <span className="font-medium">Account Evidence</span> (customer/plan/subscription) → <span className="font-medium">Operational Evidence</span> (network/site/incidents) → <span className="font-medium">Knowledge Evidence</span> (retrieved articles with citations). Click evidence items to view source details.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

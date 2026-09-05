@@ -133,8 +133,23 @@ def analyze_ticket(
     try:
         if current_state in ("open", "new"):
             state_transition = transition_case(conn, ticket_id, current_state, "analyzing", "system", "Analysis started")
-        if target_state and target_state != "analyzing":
+            current_state = "analyzing"
+
+        if current_state == "analyzing" and target_state and target_state != "analyzing":
             state_transition = transition_case(conn, ticket_id, "analyzing", target_state, "system", f"Mode {classification.mode} selected")
+            current_state = target_state
+        elif current_state == target_state:
+            pass  # already in target state
+        elif current_state in ("pending_agent_approval", "needs_information", "human_review", "escalation_requested") and target_state != current_state:
+            # Re-analysis from an active state - transition back through analyzing
+            try:
+                state_transition = transition_case(conn, ticket_id, current_state, "analyzing", "system", "Re-analysis triggered")
+                current_state = "analyzing"
+                if target_state and target_state != "analyzing":
+                    state_transition = transition_case(conn, ticket_id, "analyzing", target_state, "system", f"Mode {classification.mode} selected")
+                    current_state = target_state
+            except (InvalidTransitionError, ValueError):
+                pass  # Keep current state if transition fails
     except (InvalidTransitionError, ValueError) as e:
         logger.warning("State transition failed: %s", e)
         classification.reason_codes.append(f"STATE-TRANSITION-ERROR: {e}")

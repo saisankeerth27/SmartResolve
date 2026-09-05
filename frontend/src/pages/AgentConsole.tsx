@@ -531,6 +531,12 @@ function ResolutionDraft({
           Escalate
         </button>
       </div>
+      <button
+        onClick={() => onAction('resolve-final', { resolution: notes || 'Case resolved after recommendation approval' })}
+        className="w-full px-3 py-2 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition-colors"
+      >
+        Mark Resolved
+      </button>
       <input
         type="text"
         placeholder="Add notes (optional)..."
@@ -604,7 +610,7 @@ function ClarificationPanel({
 
 // ── Mode C: Escalation Handover ───────────────────────
 
-function HandoverPanel({ handover }: { handover: AnalysisResult['handover'] }) {
+function HandoverPanel({ handover, onAction }: { handover: AnalysisResult['handover']; onAction: (action: string, data?: Record<string, unknown>) => void }) {
   if (!handover) return null
 
   const severityColors = {
@@ -689,11 +695,17 @@ function HandoverPanel({ handover }: { handover: AnalysisResult['handover'] }) {
       )}
 
       <div className="flex gap-2">
-        <button className="flex-1 px-3 py-2 text-xs font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors">
+        <button
+          onClick={() => onAction('escalate', { reason: handover.escalation_reasons.join('; '), queue: handover.escalation_queue })}
+          className="flex-1 px-3 py-2 text-xs font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
+        >
           Open Human Review
         </button>
-        <button className="px-3 py-2 text-xs font-medium text-surface-600 bg-surface-100 rounded-lg hover:bg-surface-200 transition-colors">
-          Add Note
+        <button
+          onClick={() => onAction('resolve-final', { resolution: 'Case resolved after human review' })}
+          className="px-3 py-2 text-xs font-medium text-emerald-700 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-colors"
+        >
+          Resolve Case
         </button>
       </div>
     </div>
@@ -819,13 +831,18 @@ export default function AgentConsolePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data || {}),
       })
-      if (res.ok) {
-        // Refresh everything
+      const result = await res.json()
+      if (res.ok && result.success) {
+        // Refresh the case
         await loadCase(selectedId)
         setAnalysis(null)
+        // Trigger queue refresh by updating filter
+        setFilter(f => f)
+      } else if (!res.ok) {
+        setErrors([result.detail || 'Action failed'])
       }
     } catch {
-      // Action failed
+      setErrors(['Action failed. Please try again.'])
     }
   }, [selectedId, loadCase])
 
@@ -958,7 +975,7 @@ export default function AgentConsolePage() {
 
               {/* Mode C: Escalation Handover */}
               {analysis && analysis.mode === 'C' && analysis.handover && (
-                <HandoverPanel handover={analysis.handover} />
+                <HandoverPanel handover={analysis.handover} onAction={handleAgentAction} />
               )}
 
               {/* Classification Details */}

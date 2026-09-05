@@ -25,7 +25,7 @@ class ClarificationRequest:
 def get_previously_asked_fields(conn, ticket_id: int) -> list[str]:
     """Get fields already asked about in previous clarification turns."""
     cursor = conn.execute(
-        "SELECT missing_field FROM clarification_requests WHERE ticket_id = ? ORDER BY created_at ASC",
+        "SELECT missing_field FROM clarification_requests WHERE ticket_id = ? ORDER BY asked_at ASC",
         (ticket_id,),
     )
     return [r[0] for r in cursor.fetchall()]
@@ -129,12 +129,16 @@ def generate_clarification(
         question = get_fallback_question(next_field)
 
     reason = f"Required field '{next_field}' not yet confirmed from customer."
+    new_turn = turn_count + 1
+
+    # Persist the clarification question
+    store_clarification(conn, ticket_id, question, next_field, reason, new_turn)
 
     return ClarificationRequest(
         question=question,
         missing_field=next_field,
         reason=reason,
-        turn_number=turn_count + 1,
+        turn_number=new_turn,
     )
 
 
@@ -162,17 +166,20 @@ Requirements:
 - Maximum 2 sentences
 """
 
-    response = gemini_client.generate_text(
-        prompt,
-        system_instruction="You are a telecom support assistant. Generate only the clarification question.",
-        temperature=0.3,
-        max_output_tokens=150,
-    )
+    try:
+        from src.ai.gemini_client import generate_text as gemini_generate
+        response = gemini_generate(
+            prompt,
+            system_instruction="You are a telecom support assistant. Generate only the clarification question.",
+            temperature=0.3,
+            max_output_tokens=150,
+        )
 
-    if response and isinstance(response, str):
-        # Clean up response
-        question = response.strip().strip('"').strip("'")
-        if question and len(question) > 10 and "?" in question:
-            return question
+        if response and isinstance(response, str):
+            question = response.strip().strip('"').strip("'")
+            if question and len(question) > 10 and "?" in question:
+                return question
+    except Exception:
+        pass
 
     return None

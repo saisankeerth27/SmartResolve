@@ -24,13 +24,13 @@ VALID_TRANSITIONS: dict[str, list[str]] = {
     "open": ["analyzing"],
     "new": ["analyzing"],
     "analyzing": ["needs_information", "pending_agent_approval", "escalation_requested"],
-    "needs_information": ["analyzing", "escalation_requested"],
+    "needs_information": ["analyzing", "escalation_requested", "dismissed", "open"],
     "pending_agent_approval": ["approved", "dismissed", "escalation_requested"],
-    "escalation_requested": ["human_review"],
+    "escalation_requested": ["human_review", "dismissed"],
     "human_review": ["approved", "dismissed"],
     "approved": ["resolved"],
-    "dismissed": [],
-    "resolved": [],
+    "dismissed": ["open"],
+    "resolved": ["open"],
 }
 
 

@@ -138,7 +138,7 @@ function InteractionIcon({ type }: { type: string }) {
   )
 }
 
-function AiResultPanel({ result }: { result: CaseReasoningResponse }) {
+function AiResultPanel({ result, onReanalyze }: { result: CaseReasoningResponse; onReanalyze: () => void }) {
   const navigate = useNavigate()
   const { reasoning, retrieval } = result
   const isGrounded = reasoning.status === 'grounded'
@@ -281,7 +281,7 @@ function AiResultPanel({ result }: { result: CaseReasoningResponse }) {
 
       {/* Re-analyze */}
       <button
-        onClick={() => {}}
+        onClick={onReanalyze}
         className="w-full px-3 py-1.5 text-xs font-medium text-surface-600 bg-surface-50 border border-surface-200 rounded-lg hover:bg-surface-100 transition-colors"
       >
         Re-analyze
@@ -1002,7 +1002,7 @@ export function CaseDetailPage() {
               )}
 
               {aiResult && aiStatus === 'done' && (
-                <AiResultPanel result={aiResult} />
+                <AiResultPanel result={aiResult} onReanalyze={runAnalysis} />
               )}
             </div>
           </PanelCard>
